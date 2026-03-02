@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/metal-stack/metal-lib/pkg/testcommon"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 )
@@ -88,7 +87,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"`), 0755))
 			}
 
 			oss, err := detectOS(fs)
-			if diff := cmp.Diff(tt.wantErr, err, testcommon.ErrorStringComparer()); diff != "" {
+			if diff := cmp.Diff(tt.wantErr, err, errorStringComparer()); diff != "" {
 				t.Errorf("error diff (+got -want):\n %s", diff)
 			}
 			if diff := cmp.Diff(tt.want, oss); diff != "" {

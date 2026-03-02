@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/metal-stack/metal-go/api/models"
-	"github.com/metal-stack/metal-lib/pkg/testcommon"
 	v1 "github.com/metal-stack/os-installer/api/v1"
 	"github.com/metal-stack/v"
 	"github.com/spf13/afero"
@@ -199,7 +198,7 @@ func Test_installer_detectFirmware(t *testing.T) {
 			}
 
 			err := i.detectFirmware()
-			if diff := cmp.Diff(tt.wantErr, err, testcommon.ErrorStringComparer()); diff != "" {
+			if diff := cmp.Diff(tt.wantErr, err, errorStringComparer()); diff != "" {
 				t.Errorf("error diff (+got -want):\n %s", diff)
 			}
 		})
@@ -257,7 +256,7 @@ nameserver 5.6.7.8
 			}
 
 			err := i.writeResolvConf()
-			if diff := cmp.Diff(tt.wantErr, err, testcommon.ErrorStringComparer()); diff != "" {
+			if diff := cmp.Diff(tt.wantErr, err, errorStringComparer()); diff != "" {
 				t.Errorf("error diff (+got -want):\n %s", diff)
 			}
 
@@ -457,7 +456,7 @@ makestep 1 3`,
 			}
 
 			err := i.writeNTPConf()
-			if diff := cmp.Diff(tt.wantErr, err, testcommon.ErrorStringComparer()); diff != "" {
+			if diff := cmp.Diff(tt.wantErr, err, errorStringComparer()); diff != "" {
 				t.Errorf("error diff (+got -want):\n %s", diff)
 			}
 
@@ -498,7 +497,7 @@ func Test_installer_fixPermissions(t *testing.T) {
 			}
 
 			err := i.fixPermissions()
-			if diff := cmp.Diff(tt.wantErr, err, testcommon.ErrorStringComparer()); diff != "" {
+			if diff := cmp.Diff(tt.wantErr, err, errorStringComparer()); diff != "" {
 				t.Errorf("error diff (+got -want):\n %s", diff)
 			}
 
@@ -669,7 +668,7 @@ func Test_installer_unsetMachineID(t *testing.T) {
 			}
 
 			err := i.unsetMachineID()
-			if diff := cmp.Diff(tt.wantErr, err, testcommon.ErrorStringComparer()); diff != "" {
+			if diff := cmp.Diff(tt.wantErr, err, errorStringComparer()); diff != "" {
 				t.Errorf("error diff (+got -want):\n %s", diff)
 			}
 
@@ -769,7 +768,7 @@ func Test_installer_writeBootInfo(t *testing.T) {
 			}
 
 			err := i.writeBootInfo(tt.cmdline)
-			if diff := cmp.Diff(tt.wantErr, err, testcommon.ErrorStringComparer()); diff != "" {
+			if diff := cmp.Diff(tt.wantErr, err, errorStringComparer()); diff != "" {
 				t.Errorf("error diff (+got -want):\n %s", diff)
 			}
 
@@ -859,7 +858,7 @@ func Test_installer_processUserdata(t *testing.T) {
 			}
 
 			err := i.processUserdata()
-			if diff := cmp.Diff(tt.wantErr, err, testcommon.ErrorStringComparer()); diff != "" {
+			if diff := cmp.Diff(tt.wantErr, err, errorStringComparer()); diff != "" {
 				t.Errorf("error diff (+got -want):\n %s", diff)
 			}
 		})
@@ -989,7 +988,7 @@ GRUB_SERIAL_COMMAND="serial --speed=115200 --unit=1 --word=8"
 			}
 
 			err := i.grubInstall(tt.cmdline)
-			if diff := cmp.Diff(tt.wantErr, err, testcommon.ErrorStringComparer()); diff != "" {
+			if diff := cmp.Diff(tt.wantErr, err, errorStringComparer()); diff != "" {
 				t.Errorf("error diff (+got -want):\n %s", diff)
 			}
 
@@ -1052,7 +1051,7 @@ ignitionVersion: Ignition v0.36.2
 			v.Revision = "revision"
 
 			err := i.writeBuildMeta()
-			if diff := cmp.Diff(tt.wantErr, err, testcommon.ErrorStringComparer()); diff != "" {
+			if diff := cmp.Diff(tt.wantErr, err, errorStringComparer()); diff != "" {
 				t.Errorf("error diff (+got -want):\n %s", diff)
 			}
 
@@ -1061,4 +1060,19 @@ ignitionVersion: Ignition v0.36.2
 			assert.Equal(t, tt.want, string(content))
 		})
 	}
+}
+
+func errorStringComparer() cmp.Option {
+	return cmp.Comparer(func(x, y error) bool {
+		if x == nil && y == nil {
+			return true
+		}
+		if x == nil && y != nil {
+			return false
+		}
+		if x != nil && y == nil {
+			return false
+		}
+		return x.Error() == y.Error()
+	})
 }
