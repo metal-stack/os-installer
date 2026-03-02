@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"os"
+	"os/exec"
 	"os/user"
 	"path"
 	"strconv"
@@ -43,6 +44,34 @@ type installer struct {
 	oss    operatingsystem
 	config *v1.InstallerConfig
 	exec   *cmdexec
+}
+
+func Install(log *slog.Logger, config *v1.InstallerConfig) error {
+	start := time.Now()
+	fs := afero.OsFs{}
+
+	oss, err := detectOS(fs)
+	if err != nil {
+		return fmt.Errorf("os detection failed %w", err)
+	}
+
+	i := installer{
+		log:    log.WithGroup("os-installer"),
+		fs:     fs,
+		oss:    oss,
+		config: config,
+		exec: &cmdexec{
+			log: log.WithGroup("cmdexec"),
+			c:   exec.CommandContext,
+		},
+	}
+
+	err = i.do()
+	if err != nil {
+		return fmt.Errorf("installation failed duration %s %w", time.Since(start).String(), err)
+	}
+	i.log.Info("installation succeeded", "duration", time.Since(start).String())
+	return nil
 }
 
 func (i *installer) do() error {
