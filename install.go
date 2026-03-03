@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	config "github.com/flatcar/ignition/config/v2_4"
+	ignitionConfig "github.com/flatcar/ignition/config/v2_4"
 	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-networker/pkg/netconf"
 	v1 "github.com/metal-stack/os-installer/api/v1"
@@ -530,7 +530,7 @@ func (i *installer) processUserdata() error {
 	if err != nil {
 		return err
 	}
-	_, report, err := config.Parse(rawConfig)
+	_, report, err := ignitionConfig.Parse(rawConfig)
 	if err != nil {
 		i.log.Error("error when validating ignition userdata, continuing anyway", "error", err)
 	}

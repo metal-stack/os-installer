@@ -34,7 +34,7 @@ func main() {
 	}
 
 	i := installer{
-		log:    log.WithGroup("install-go"),
+		log:    log.WithGroup("os-installer"),
 		fs:     fs,
 		oss:    oss,
 		config: config,
