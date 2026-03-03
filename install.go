@@ -14,8 +14,8 @@ import (
 
 	ignitionConfig "github.com/flatcar/ignition/config/v2_4"
 	"github.com/metal-stack/metal-go/api/models"
-	"github.com/metal-stack/metal-networker/pkg/netconf"
 	v1 "github.com/metal-stack/os-installer/api/v1"
+	"github.com/metal-stack/os-installer/pkg/network"
 	"github.com/metal-stack/os-installer/templates"
 	"github.com/metal-stack/v"
 	"github.com/spf13/afero"
@@ -411,17 +411,17 @@ func (i *installer) createMetalUser() error {
 
 func (i *installer) configureNetwork() error {
 	i.log.Info("configure network")
-	kb, err := netconf.New(i.log.WithGroup("networker"), installYAML)
+	kb, err := network.New(i.log.WithGroup("networker"), installYAML)
 	if err != nil {
 		return err
 	}
 
-	var kind netconf.BareMetalType
+	var kind network.BareMetalType
 	switch i.config.Role {
 	case models.V1MachineAllocationRoleFirewall:
-		kind = netconf.Firewall
+		kind = network.Firewall
 	case models.V1MachineAllocationRoleMachine:
-		kind = netconf.Machine
+		kind = network.Machine
 	default:
 		return fmt.Errorf("unknown role:%s", i.config.Role)
 	}
@@ -431,11 +431,11 @@ func (i *installer) configureNetwork() error {
 		return err
 	}
 
-	c, err := netconf.NewConfigurator(kind, *kb, false)
+	c, err := network.NewConfigurator(kind, *kb, false)
 	if err != nil {
 		return err
 	}
-	c.Configure(netconf.ForwardPolicyDrop)
+	c.Configure(network.ForwardPolicyDrop)
 	return nil
 }
 

@@ -1,0 +1,23 @@
+package network
+
+import (
+	"embed"
+	"path"
+	"text/template"
+)
+
+//go:embed tpl
+var templates embed.FS
+
+func mustReadTpl(tplName string) string {
+	contents, err := templates.ReadFile(path.Join("tpl", tplName))
+	if err != nil {
+		panic(err)
+	}
+	return string(contents)
+}
+
+func MustParseTpl(tplName string) *template.Template {
+	s := mustReadTpl(tplName)
+	return template.Must(template.New(tplName).Parse(string(s)))
+}

@@ -11,7 +11,7 @@ LINKMODE := -extldflags=-static \
 		 -X 'github.com/metal-stack/v.GitSHA1=$(SHA)' \
 		 -X 'github.com/metal-stack/v.BuildDate=$(BUILDDATE)'
 
-all: test binary
+all: test validate binary
 
 .PHONY: binary
 binary:
@@ -27,3 +27,10 @@ binary:
 .PHONY: test
 test:
 	GO_ENV=testing go test -race -cover ./...
+
+
+.PHONY: validate
+validate:
+	cd pkg/network
+	./validate.sh
+	cd -
