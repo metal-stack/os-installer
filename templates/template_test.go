@@ -5,15 +5,15 @@ import (
 	"os"
 	"testing"
 
-	"github.com/metal-stack/metal-go/api/models"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDefaultChronyTemplate(t *testing.T) {
 	defaultNTPServer := "time.cloudflare.com"
-	ntpServers := []*models.V1NTPServer{
+	ntpServers := []*apiv2.NTPServer{
 		{
-			Address: &defaultNTPServer,
+			Address: defaultNTPServer,
 		},
 	}
 
@@ -25,9 +25,9 @@ func TestDefaultChronyTemplate(t *testing.T) {
 
 func TestCustomChronyTemplate(t *testing.T) {
 	customNTPServer := "custom.1.ntp.org"
-	ntpServers := []*models.V1NTPServer{
+	ntpServers := []*apiv2.NTPServer{
 		{
-			Address: &customNTPServer,
+			Address: customNTPServer,
 		},
 	}
 

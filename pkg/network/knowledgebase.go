@@ -6,12 +6,10 @@ import (
 	"log/slog"
 	"net"
 	"os"
-	"slices"
 
 	apiv1 "github.com/metal-stack/os-installer/api/v1"
 
-	"github.com/metal-stack/metal-go/api/models"
-	mn "github.com/metal-stack/metal-lib/pkg/net"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	"github.com/metal-stack/v"
 
 	"gopkg.in/yaml.v3"
@@ -77,8 +75,8 @@ func (c config) Validate(kind BareMetalType) error {
 				"underlay: false) is present failed")
 		}
 
-		for _, net := range c.GetNetworks(mn.External) {
-			if len(net.Destinationprefixes) == 0 {
+		for _, net := range c.GetNetworks(apiv2.NetworkType_NETWORK_TYPE_EXTERNAL) {
+			if len(net.DestinationPrefixes) == 0 {
 				return errors.New("non-private, non-underlay networks must contain destination prefix(es) to make " +
 					"any sense of it")
 			}
@@ -100,7 +98,7 @@ func (c config) Validate(kind BareMetalType) error {
 			"'private: true' network IP for machine, 'underlay: true' network IP for firewall")
 	}
 
-	if net.Asn != nil && *net.Asn <= 0 {
+	if net.Asn <= 0 {
 		return errors.New("'asn' of private (machine) resp. underlay (firewall) network must not be missing")
 	}
 
@@ -116,27 +114,27 @@ func (c config) Validate(kind BareMetalType) error {
 }
 
 func (c config) containsAnyPublicNetwork() bool {
-	if len(c.GetNetworks(mn.External)) > 0 {
+	if len(c.GetNetworks(apiv2.NetworkType_NETWORK_TYPE_EXTERNAL)) > 0 {
 		return true
 	}
-	return slices.ContainsFunc(c.Networks, isDMZNetwork)
+	return false
 }
 
 func (c config) containsSinglePrivatePrimary() bool {
-	return c.containsSingleNetworkOf(mn.PrivatePrimaryUnshared) != c.containsSingleNetworkOf(mn.PrivatePrimaryShared)
+	return c.containsSingleNetworkOf(apiv2.NetworkType_NETWORK_TYPE_CHILD) != c.containsSingleNetworkOf(apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED)
 }
 
 func (c config) containsSingleUnderlay() bool {
-	return c.containsSingleNetworkOf(mn.Underlay)
+	return c.containsSingleNetworkOf(apiv2.NetworkType_NETWORK_TYPE_UNDERLAY)
 }
 
-func (c config) containsSingleNetworkOf(t string) bool {
+func (c config) containsSingleNetworkOf(t apiv2.NetworkType) bool {
 	possibleNetworks := c.GetNetworks(t)
 	return len(possibleNetworks) == 1
 }
 
 // CollectIPs collects IPs of the given networks.
-func (c config) CollectIPs(types ...string) []string {
+func (c config) CollectIPs(types ...apiv2.NetworkType) []string {
 	var result []string
 
 	networks := c.GetNetworks(types...)
@@ -148,15 +146,15 @@ func (c config) CollectIPs(types ...string) []string {
 }
 
 // GetNetworks returns all networks present.
-func (c config) GetNetworks(types ...string) []*models.V1MachineNetwork {
-	var result []*models.V1MachineNetwork
+func (c config) GetNetworks(types ...apiv2.NetworkType) []*apiv2.MachineNetwork {
+	var result []*apiv2.MachineNetwork
 
 	for _, t := range types {
 		for _, n := range c.Networks {
-			if n.Networktype == nil {
+			if n.NetworkType == apiv2.NetworkType_NETWORK_TYPE_UNSPECIFIED {
 				continue
 			}
-			if *n.Networktype == t {
+			if n.NetworkType == t {
 				result = append(result, n)
 			}
 		}
@@ -167,7 +165,7 @@ func (c config) GetNetworks(types ...string) []*models.V1MachineNetwork {
 
 func (c config) isAnyNAT() bool {
 	for _, net := range c.Networks {
-		if net.Nat != nil && *net.Nat {
+		if net.NatType != apiv2.NATType_NAT_TYPE_NONE || net.NatType != apiv2.NATType_NAT_TYPE_UNSPECIFIED {
 			return true
 		}
 	}
@@ -175,29 +173,30 @@ func (c config) isAnyNAT() bool {
 	return false
 }
 
-func (c config) getPrivatePrimaryNetwork() *models.V1MachineNetwork {
-	return c.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared)[0]
+func (c config) getPrivatePrimaryNetwork() *apiv2.MachineNetwork {
+	return c.GetNetworks(apiv2.NetworkType_NETWORK_TYPE_CHILD, apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED)[0]
 }
 
-func (c config) getUnderlayNetwork() *models.V1MachineNetwork {
+func (c config) getUnderlayNetwork() *apiv2.MachineNetwork {
 	// Safe access since validation ensures there is exactly one.
-	return c.GetNetworks(mn.Underlay)[0]
+	return c.GetNetworks(apiv2.NetworkType_NETWORK_TYPE_UNDERLAY)[0]
 }
 
-func (c config) GetDefaultRouteNetwork() *models.V1MachineNetwork {
-	externalNets := c.GetNetworks(mn.External)
+func (c config) GetDefaultRouteNetwork() *apiv2.MachineNetwork {
+	externalNets := c.GetNetworks(apiv2.NetworkType_NETWORK_TYPE_EXTERNAL)
 	for _, network := range externalNets {
-		if containsDefaultRoute(network.Destinationprefixes) {
+		if containsDefaultRoute(network.DestinationPrefixes) {
 			return network
 		}
 	}
 
-	privateSecondarySharedNets := c.GetNetworks(mn.PrivateSecondaryShared)
-	for _, network := range privateSecondarySharedNets {
-		if containsDefaultRoute(network.Destinationprefixes) {
-			return network
-		}
-	}
+	// Not supported anymore
+	// privateSecondarySharedNets := c.GetNetworks(mn.PrivateSecondaryShared)
+	// for _, network := range privateSecondarySharedNets {
+	// 	if containsDefaultRoute(network.DestinationPrefixes) {
+	// 		return network
+	// 	}
+	// }
 
 	return nil
 }
@@ -212,12 +211,12 @@ func (c config) getDefaultRouteVRFName() (string, error) {
 
 func (c config) nicsContainValidMACs() bool {
 	for _, nic := range c.Nics {
-		if nic.Mac == nil || *nic.Mac == "" {
+		if nic.Mac == "" {
 			return false
 		}
 
-		if _, err := net.ParseMAC(*nic.Mac); err != nil {
-			c.log.Error("invalid mac", "mac", *nic.Mac)
+		if _, err := net.ParseMAC(nic.Mac); err != nil {
+			c.log.Error("invalid mac", "mac", nic.Mac)
 			return false
 		}
 	}
@@ -227,11 +226,11 @@ func (c config) nicsContainValidMACs() bool {
 
 func (c config) allNonUnderlayNetworksHaveNonZeroVRF() bool {
 	for _, net := range c.Networks {
-		if net.Underlay != nil && *net.Underlay {
+		if net.NetworkType == apiv2.NetworkType_NETWORK_TYPE_UNDERLAY {
 			continue
 		}
 
-		if net.Vrf != nil && *net.Vrf <= 0 {
+		if net.Vrf <= 0 {
 			return false
 		}
 	}

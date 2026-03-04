@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/metal-stack/metal-go/api/models"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	apiv1 "github.com/metal-stack/os-installer/api/v1"
 	"github.com/stretchr/testify/assert"
@@ -93,10 +93,10 @@ func TestNewKnowledgeBase(t *testing.T) {
 var (
 	boolTrue  = true
 	boolFalse = false
-	asn0      = int64(0)
-	asn1      = int64(1011209)
-	vrf0      = int64(0)
-	vrf1      = int64(1011209)
+	asn0      = uint32(0)
+	asn1      = uint32(1011209)
+	vrf0      = uint64(0)
+	vrf1      = uint64(1011209)
 )
 
 func stubKnowledgeBase() config {
@@ -110,14 +110,13 @@ func stubKnowledgeBase() config {
 
 	return config{
 		InstallerConfig: apiv1.InstallerConfig{
-			Networks: []*models.V1MachineNetwork{
+			Networks: []*apiv2.MachineNetwork{
 				{Private: &boolTrue, Networktype: &privatePrimaryUnshared, Ips: []string{"10.0.0.1"}, Asn: &asn1, Vrf: &vrf1, Networkid: &privateNetID},
 				{Underlay: &boolTrue, Networktype: &underlay, Ips: []string{"10.0.0.1"}, Asn: &asn1, Vrf: &vrf0, Networkid: &underlayNetID},
 				{Private: &boolFalse, Networktype: &external, Underlay: &boolFalse, Destinationprefixes: []string{"10.0.0.1/24"}, Asn: &asn1, Vrf: &vrf1, Networkid: &underlayNetID},
 			},
-			Nics: []*models.V1MachineNic{
-				{
-					Mac: &mac},
+			Nics: []*apiv2.MachineNic{
+				{Mac: mac},
 			},
 		},
 		log: log,
@@ -194,11 +193,10 @@ func TestKnowledgeBase_Validate(t *testing.T) {
 func stripVRFValueOfNonUnderlayNetworks(kb config) config {
 	for i := 0; i < len(kb.Networks); i++ {
 		// underlay runs in default vrf and no name is required
-		if kb.Networks[i].Underlay != nil && *kb.Networks[i].Underlay {
+		if kb.Networks[i].NetworkType == apiv2.NetworkType_NETWORK_TYPE_UNDERLAY {
 			continue
 		}
-		vrf := int64(0)
-		kb.Networks[i].Vrf = &vrf
+		kb.Networks[i].Vrf = uint64(0)
 	}
 	return kb
 }
@@ -210,7 +208,7 @@ func stripDestinationPrefixesFromPublicNetworks(kb config) config {
 	kb.Networks[0].Nat = &boolTrue
 	for i := 0; i < len(kb.Networks); i++ {
 		if kb.Networks[i].Underlay != nil && !*kb.Networks[i].Underlay && kb.Networks[i].Private != nil && !*kb.Networks[i].Private {
-			kb.Networks[i].Destinationprefixes = []string{}
+			kb.Networks[i].DestinationPrefixes = []string{}
 		}
 	}
 	return kb
@@ -229,7 +227,7 @@ func setupIllegalNat(kb config) config {
 func unlegalizeMACs(kb config) config {
 	mac := "1:2.3"
 	for i := 0; i < len(kb.Nics); i++ {
-		kb.Nics[i].Mac = &mac
+		kb.Nics[i].Mac = mac
 	}
 	return kb
 }
@@ -237,20 +235,20 @@ func unlegalizeMACs(kb config) config {
 func stripMACs(kb config) config {
 	mac := ""
 	for i := 0; i < len(kb.Nics); i++ {
-		kb.Nics[i].Mac = &mac
+		kb.Nics[i].Mac = mac
 	}
 	return kb
 }
 
 func stripNICs(kb config) config {
-	kb.Nics = []*models.V1MachineNic{}
+	kb.Nics = []*apiv2.MachineNic{}
 	return kb
 }
 
 func stripUnderlayNetworkASN(kb config) config {
 	for i := 0; i < len(kb.Networks); i++ {
 		if kb.Networks[i].Underlay != nil && *kb.Networks[i].Underlay {
-			kb.Networks[i].Asn = &asn0
+			kb.Networks[i].Asn = asn0
 		}
 	}
 	return kb
@@ -259,7 +257,7 @@ func stripUnderlayNetworkASN(kb config) config {
 func stripPrivateNetworkASN(kb config) config {
 	for i := 0; i < len(kb.Networks); i++ {
 		if kb.Networks[i].Private != nil && *kb.Networks[i].Private {
-			kb.Networks[i].Asn = &asn0
+			kb.Networks[i].Asn = asn0
 		}
 	}
 	return kb
@@ -273,18 +271,18 @@ func stripIPs(kb config) config {
 }
 
 func stripNetworks(kb config) config {
-	kb.Networks = []*models.V1MachineNetwork{}
+	kb.Networks = []*apiv2.MachineNetwork{}
 	return kb
 }
 
 func maskUnderlayNetworks(kb config) config {
 	privateSecondary := mn.PrivateSecondaryShared
 	for i, n := range kb.Networks {
-		if n.Networktype != nil && *n.Networktype == mn.Underlay {
+		if n.NetworkType == apiv2.NetworkType_NETWORK_TYPE_UNDERLAY {
 			kb.Networks[i].Underlay = &boolFalse
 			kb.Networks[i].Networktype = &privateSecondary
 			// avoid to run into validation error for absent vrf
-			kb.Networks[i].Vrf = &vrf1
+			kb.Networks[i].Vrf = vrf1
 		}
 	}
 	return kb

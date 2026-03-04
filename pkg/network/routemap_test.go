@@ -308,7 +308,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 					continue
 				}
 				gotBySourceVrf := got.bySourceVrf()
-				targetVrf := fmt.Sprintf("vrf%d", *network.Vrf)
+				targetVrf := fmt.Sprintf("vrf%d", network.Vrf)
 				want := tt.want[targetVrf]
 
 				if !reflect.DeepEqual(gotBySourceVrf, want) {

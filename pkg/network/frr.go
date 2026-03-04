@@ -6,8 +6,7 @@ import (
 	"net/netip"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/metal-stack/metal-go/api/models"
-	mn "github.com/metal-stack/metal-lib/pkg/net"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	"github.com/metal-stack/os-installer/pkg/exec"
 	"github.com/metal-stack/os-installer/pkg/net"
 )
@@ -74,7 +73,7 @@ func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string, frrVersio
 				FRRVersion: FRRVersion,
 				Hostname:   c.Hostname,
 				Comment:    versionHeader(c.MachineUUID),
-				ASN:        *net.Asn,
+				ASN:        int64(net.Asn),
 				RouterID:   routerID(net),
 			},
 			VRFs: assembleVRFs(c, frrVersion),
@@ -86,7 +85,7 @@ func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string, frrVersio
 				FRRVersion: FRRVersion,
 				Hostname:   c.Hostname,
 				Comment:    versionHeader(c.MachineUUID),
-				ASN:        *net.Asn,
+				ASN:        int64(net.Asn),
 				RouterID:   routerID(net),
 			},
 		}
@@ -106,7 +105,7 @@ func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string, frrVersio
 // routerID will calculate the bgp router-id which must only be specified in the ipv6 range.
 // returns 0.0.0.0 for erroneous ip addresses and 169.254.255.255 for ipv6
 // TODO prepare machine allocations with ipv6 primary address and tests
-func routerID(net *models.V1MachineNetwork) string {
+func routerID(net *apiv2.MachineNetwork) string {
 	if len(net.Ips) < 1 {
 		return "0.0.0.0"
 	}
@@ -140,18 +139,18 @@ func assembleVRFs(kb config, frrVersion *semver.Version) []VRF {
 		}
 	}
 
-	networks := kb.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)
+	networks := kb.GetNetworks(apiv2.NetworkType_NETWORK_TYPE_CHILD, apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED, apiv2.NetworkType_NETWORK_TYPE_EXTERNAL)
 	for _, network := range networks {
-		if network.Networktype == nil {
+		if network.NetworkType == apiv2.NetworkType_NETWORK_TYPE_UNSPECIFIED {
 			continue
 		}
 
 		i := importRulesForNetwork(kb, network)
 		vrf := VRF{
 			Identity: Identity{
-				ID: int(*network.Vrf),
+				ID: int(network.Vrf),
 			},
-			VNI:            int(*network.Vrf),
+			VNI:            int(network.Vrf),
 			ImportVRFNames: i.ImportVRFs,
 			IPPrefixLists:  i.prefixLists(),
 			RouteMaps:      i.routeMaps(),

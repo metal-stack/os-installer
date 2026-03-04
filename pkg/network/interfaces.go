@@ -7,7 +7,7 @@ import (
 	"net/netip"
 	"text/template"
 
-	mn "github.com/metal-stack/metal-lib/pkg/net"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 )
 
 type (
@@ -36,15 +36,15 @@ func newIfacesApplier(kind BareMetalType, c config) ifacesApplier {
 	switch kind {
 	case Firewall:
 		underlay := c.getUnderlayNetwork()
-		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", *underlay.Networkid)
+		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", underlay.Network)
 		d.Loopback.IPs = addBitlen(underlay.Ips)
 		d.EVPNIfaces = getEVPNIfaces(c)
 	case Machine:
 		private := c.getPrivatePrimaryNetwork()
-		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", *private.Networkid)
+		d.Loopback.Comment = fmt.Sprintf("# networkid: %s", private.Network)
 		// Ensure that the ips of the private network are the first ips at the loopback interface.
 		// The first lo IP is used within network communication and other systems depend on seeing the first private ip.
-		d.Loopback.IPs = addBitlen(append(private.Ips, c.CollectIPs(mn.External)...))
+		d.Loopback.IPs = addBitlen(append(private.Ips, c.CollectIPs(apiv2.NetworkType_NETWORK_TYPE_EXTERNAL)...))
 	default:
 		c.log.Error("unknown configuratorType", "kind", kind)
 		panic(fmt.Errorf("unknown configurator type:%v", kind))
@@ -142,20 +142,20 @@ func getEVPNIfaces(kb config) []EVPNIface {
 
 	vrfTableOffset := 1000
 	for i, n := range kb.Networks {
-		if n.Underlay != nil && *n.Underlay {
+		if n.NetworkType == apiv2.NetworkType_NETWORK_TYPE_UNDERLAY {
 			continue
 		}
 
-		vrf := int(*n.Vrf)
+		vrf := int(n.Vrf)
 		e := EVPNIface{}
 		e.Comment = versionHeader(kb.MachineUUID)
-		e.SVI.Comment = fmt.Sprintf("# svi (networkid: %s)", *n.Networkid)
+		e.SVI.Comment = fmt.Sprintf("# svi (networkid: %s)", n.Network)
 		e.SVI.VLANID = VLANOffset + i
 		e.SVI.Addresses = addBitlen(n.Ips)
-		e.VXLAN.Comment = fmt.Sprintf("# vxlan (networkid: %s)", *n.Networkid)
+		e.VXLAN.Comment = fmt.Sprintf("# vxlan (networkid: %s)", n.Network)
 		e.VXLAN.ID = vrf
 		e.VXLAN.TunnelIP = kb.getUnderlayNetwork().Ips[0]
-		e.VRF.Comment = fmt.Sprintf("# vrf (networkid: %s)", *n.Networkid)
+		e.VRF.Comment = fmt.Sprintf("# vrf (networkid: %s)", n.Network)
 		e.VRF.ID = vrf
 		e.VRF.Table = vrfTableOffset + i
 		result = append(result, e)

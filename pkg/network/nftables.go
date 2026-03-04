@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/metal-stack/metal-go/api/models"
-	mn "github.com/metal-stack/metal-lib/pkg/net"
+	"github.com/metal-stack/api/go/enum"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 
 	"github.com/metal-stack/os-installer/pkg/exec"
 	"github.com/metal-stack/os-installer/pkg/net"
@@ -108,15 +108,16 @@ func (*NftablesReloader) Reload() error {
 	return exec.NewVerboseCmd(systemctlBin, "reload", nftablesService).Run()
 }
 
-func isDMZNetwork(n *models.V1MachineNetwork) bool {
-	return *n.Networktype == mn.PrivateSecondaryShared && containsDefaultRoute(n.Destinationprefixes)
-}
+// TODO remove DMZ functionality
+// func isDMZNetwork(n *apiv2.MachineNetwork) bool {
+// 	return n.NetworkType == mn.PrivateSecondaryShared && containsDefaultRoute(n.DestinationPrefixes)
+// }
 
 func getInput(c config) Input {
 	input := Input{}
-	networks := c.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared)
+	networks := c.GetNetworks(apiv2.NetworkType_NETWORK_TYPE_CHILD, apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED)
 	for _, n := range networks {
-		input.InInterfaces = append(input.InInterfaces, fmt.Sprintf("vrf%d", *n.Vrf))
+		input.InInterfaces = append(input.InInterfaces, fmt.Sprintf("vrf%d", n.Vrf))
 	}
 	return input
 }
@@ -125,18 +126,19 @@ func getSNAT(c config, enableDNSProxy bool) []SNAT {
 	var result []SNAT
 
 	private := c.getPrivatePrimaryNetwork()
-	networks := c.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, mn.External)
+	networks := c.GetNetworks(apiv2.NetworkType_NETWORK_TYPE_CHILD, apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED, apiv2.NetworkType_NETWORK_TYPE_EXTERNAL)
+	// networks := c.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared, apiv2.NetworkType_NETWORK_TYPE_EXTERNAL)
 
 	privatePfx := private.Prefixes
-	for _, n := range c.Networks {
-		if isDMZNetwork(n) {
-			privatePfx = append(privatePfx, n.Prefixes...)
-		}
+	// for _, n := range c.Networks {
+	// 	if isDMZNetwork(n) {
+	// 		privatePfx = append(privatePfx, n.Prefixes...)
+	// 	}
 
-	}
+	// }
 
 	var (
-		defaultNetwork models.V1MachineNetwork
+		defaultNetwork apiv2.MachineNetwork
 		defaultAF      string
 	)
 	defaultNetworkName, err := c.getDefaultRouteVRFName()
@@ -149,13 +151,13 @@ func getSNAT(c config, enableDNSProxy bool) []SNAT {
 		}
 	}
 	for _, n := range networks {
-		if n.Nat != nil && !*n.Nat {
+		if n.NatType == apiv2.NATType_NAT_TYPE_NONE || n.NatType == apiv2.NATType_NAT_TYPE_UNSPECIFIED || n.NatType != apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE {
 			continue
 		}
 
 		var sources []AddrSpec
-		cmt := fmt.Sprintf("snat (networkid: %s)", *n.Networkid)
-		svi := fmt.Sprintf("vlan%d", *n.Vrf)
+		cmt := fmt.Sprintf("snat (networkid: %s)", n.Network)
+		svi := fmt.Sprintf("vlan%d", n.Vrf)
 
 		for _, p := range privatePfx {
 			af, err := getAddressFamily(p)
@@ -187,10 +189,10 @@ func getSNAT(c config, enableDNSProxy bool) []SNAT {
 }
 
 func getDNSProxyDNAT(c config, port, zone string) DNAT {
-	networks := c.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared)
+	networks := c.GetNetworks(apiv2.NetworkType_NETWORK_TYPE_CHILD, apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED)
 	svis := []string{}
 	for _, n := range networks {
-		svi := fmt.Sprintf("vlan%d", *n.Vrf)
+		svi := fmt.Sprintf("vlan%d", n.Vrf)
 		svis = append(svis, svi)
 	}
 
@@ -246,15 +248,19 @@ func getFirewallRules(c config) FirewallRules {
 			if err != nil {
 				continue
 			}
+			protocolString, err := enum.GetStringValue(r.Protocol)
+			if err != nil {
+				continue
+			}
 			egressRules = append(egressRules,
-				fmt.Sprintf("iifname { %s } %s daddr %s %s dport { %s } counter accept comment %q", strings.Join(quotedInputInterfaces, ","), af, daddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
+				fmt.Sprintf("iifname { %s } %s daddr %s %s dport { %s } counter accept comment %q", strings.Join(quotedInputInterfaces, ","), af, daddr, strings.ToLower(*protocolString), strings.Join(ports, ","), r.Comment))
 		}
 	}
 
 	privatePrimaryNetwork := c.getPrivatePrimaryNetwork()
 	outputInterfacenames := ""
-	if privatePrimaryNetwork != nil && privatePrimaryNetwork.Vrf != nil {
-		outputInterfacenames = fmt.Sprintf("oifname { \"vrf%d\", \"vni%d\", \"vlan%d\" }", *privatePrimaryNetwork.Vrf, *privatePrimaryNetwork.Vrf, *privatePrimaryNetwork.Vrf)
+	if privatePrimaryNetwork != nil && privatePrimaryNetwork.Vrf != 0 {
+		outputInterfacenames = fmt.Sprintf("oifname { \"vrf%d\", \"vni%d\", \"vlan%d\" }", privatePrimaryNetwork.Vrf, privatePrimaryNetwork.Vrf, privatePrimaryNetwork.Vrf)
 	}
 
 	for _, r := range c.FirewallRules.Ingress {
@@ -281,7 +287,11 @@ func getFirewallRules(c config) FirewallRules {
 			if err != nil {
 				continue
 			}
-			ingressRules = append(ingressRules, fmt.Sprintf("%s %s saddr %s %s dport { %s } counter accept comment %q", destinationSpec, af, saddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
+			protocolString, err := enum.GetStringValue(r.Protocol)
+			if err != nil {
+				continue
+			}
+			ingressRules = append(ingressRules, fmt.Sprintf("%s %s saddr %s %s dport { %s } counter accept comment %q", destinationSpec, af, saddr, strings.ToLower(*protocolString), strings.Join(ports, ","), r.Comment))
 		}
 	}
 	return FirewallRules{

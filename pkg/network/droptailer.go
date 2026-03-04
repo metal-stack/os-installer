@@ -32,8 +32,8 @@ func newDroptailerServiceApplier(kb config, v net.Validator) (net.Applier, error
 
 func getTenantVRFName(kb config) (string, error) {
 	primary := kb.getPrivatePrimaryNetwork()
-	if primary.Vrf != nil && *primary.Vrf != 0 {
-		vrf := fmt.Sprintf("vrf%d", *primary.Vrf)
+	if primary.Vrf != 0 {
+		vrf := fmt.Sprintf("vrf%d", primary.Vrf)
 		return vrf, nil
 	}
 

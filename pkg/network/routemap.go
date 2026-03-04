@@ -6,8 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/metal-stack/metal-go/api/models"
-	mn "github.com/metal-stack/metal-lib/pkg/net"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 )
 
 type importPrefix struct {
@@ -49,10 +48,10 @@ func (i *importRule) bySourceVrf() map[string]ImportSettings {
 	return r
 }
 
-func importRulesForNetwork(kb config, network *models.V1MachineNetwork) *importRule {
+func importRulesForNetwork(kb config, network *apiv2.MachineNetwork) *importRule {
 	vrfName := vrfNameOf(network)
 
-	if network.Networktype == nil || *network.Networktype == mn.Underlay {
+	if network.NetworkType == apiv2.NetworkType_NETWORK_TYPE_UNSPECIFIED || network.NetworkType == apiv2.NetworkType_NETWORK_TYPE_UNDERLAY {
 		return nil
 	}
 	i := importRule{
@@ -60,14 +59,13 @@ func importRulesForNetwork(kb config, network *models.V1MachineNetwork) *importR
 	}
 	privatePrimaryNet := kb.getPrivatePrimaryNetwork()
 
-	externalNets := kb.GetNetworks(mn.External)
-	privateSecondarySharedNets := kb.GetNetworks(mn.PrivateSecondaryShared)
+	externalNets := kb.GetNetworks(apiv2.NetworkType_NETWORK_TYPE_EXTERNAL)
+	// privateSecondarySharedNets := kb.GetNetworks(mn.PrivateSecondaryShared)
 
-	nt := *network.Networktype
-	switch nt {
-	case mn.PrivatePrimaryUnshared:
+	switch network.NetworkType {
+	case apiv2.NetworkType_NETWORK_TYPE_CHILD:
 		fallthrough
-	case mn.PrivatePrimaryShared:
+	case apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED:
 		// reach out from private network into public networks
 		i.ImportVRFs = vrfNamesOf(externalNets)
 		i.ImportPrefixes = getDestinationPrefixes(externalNets)
@@ -92,70 +90,71 @@ func importRulesForNetwork(kb config, network *models.V1MachineNetwork) *importR
 		i.ImportPrefixes = append(i.ImportPrefixes, prefixesOfNetworks(externalNets)...)
 
 		// reach out from private network into shared private networks
-		i.ImportVRFs = append(i.ImportVRFs, vrfNamesOf(privateSecondarySharedNets)...)
-		i.ImportPrefixes = append(i.ImportPrefixes, prefixesOfNetworks(privateSecondarySharedNets)...)
+		// NOT Supported anymore
+		// i.ImportVRFs = append(i.ImportVRFs, vrfNamesOf(privateSecondarySharedNets)...)
+		// i.ImportPrefixes = append(i.ImportPrefixes, prefixesOfNetworks(privateSecondarySharedNets)...)
 
 		// reach out from private network to destination prefixes of private secondays shared networks
-		for _, n := range privateSecondarySharedNets {
-			for _, pfx := range n.Destinationprefixes {
-				ppfx := netip.MustParsePrefix(pfx)
-				isThere := false
-				for _, i := range i.ImportPrefixes {
-					if i.Prefix == ppfx {
-						isThere = true
-					}
-				}
-				if !isThere {
-					i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
-						Prefix:    ppfx,
-						Policy:    Permit,
-						SourceVRF: vrfNameOf(n),
-					})
-				}
-			}
-		}
-	case mn.PrivateSecondaryShared:
-		// reach out from private shared networks into private primary network
-		i.ImportVRFs = []string{vrfNameOf(privatePrimaryNet)}
-		i.ImportPrefixes = concatPfxSlices(prefixesOfNetwork(privatePrimaryNet, vrfNameOf(privatePrimaryNet)), prefixesOfNetwork(network, vrfNameOf(privatePrimaryNet)))
+		// for _, n := range privateSecondarySharedNets {
+		// 	for _, pfx := range n.DestinationPrefixes {
+		// 		ppfx := netip.MustParsePrefix(pfx)
+		// 		isThere := false
+		// 		for _, i := range i.ImportPrefixes {
+		// 			if i.Prefix == ppfx {
+		// 				isThere = true
+		// 			}
+		// 		}
+		// 		if !isThere {
+		// 			i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
+		// 				Prefix:    ppfx,
+		// 				Policy:    Permit,
+		// 				SourceVRF: vrfNameOf(n),
+		// 			})
+		// 		}
+		// 	}
+		// }
+	// case mn.PrivateSecondaryShared: // Not supported anymore
+	// 	// reach out from private shared networks into private primary network
+	// 	i.ImportVRFs = []string{vrfNameOf(privatePrimaryNet)}
+	// 	i.ImportPrefixes = concatPfxSlices(prefixesOfNetwork(privatePrimaryNet, vrfNameOf(privatePrimaryNet)), prefixesOfNetwork(network, vrfNameOf(privatePrimaryNet)))
 
-		// import destination prefixes of dmz networks from external networks
-		if len(network.Destinationprefixes) > 0 {
-			for _, pfx := range network.Destinationprefixes {
-				for _, e := range externalNets {
-					importExternalNet := false
-					for _, epfx := range e.Destinationprefixes {
-						if pfx == epfx {
-							importExternalNet = true
-							i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
-								Prefix:    netip.MustParsePrefix(pfx),
-								Policy:    Permit,
-								SourceVRF: vrfNameOf(e),
-							})
-						}
-					}
-					if importExternalNet {
-						i.ImportVRFs = append(i.ImportVRFs, vrfNameOf(e))
-						i.ImportPrefixes = append(i.ImportPrefixes, prefixesOfNetwork(e, vrfNameOf(e))...)
-					}
-				}
-			}
-		}
-	case mn.External:
+	// 	// import destination prefixes of dmz networks from external networks
+	// 	if len(network.DestinationPrefixes) > 0 {
+	// 		for _, pfx := range network.DestinationPrefixes {
+	// 			for _, e := range externalNets {
+	// 				importExternalNet := false
+	// 				for _, epfx := range e.DestinationPrefixes {
+	// 					if pfx == epfx {
+	// 						importExternalNet = true
+	// 						i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
+	// 							Prefix:    netip.MustParsePrefix(pfx),
+	// 							Policy:    Permit,
+	// 							SourceVRF: vrfNameOf(e),
+	// 						})
+	// 					}
+	// 				}
+	// 				if importExternalNet {
+	// 					i.ImportVRFs = append(i.ImportVRFs, vrfNameOf(e))
+	// 					i.ImportPrefixes = append(i.ImportPrefixes, prefixesOfNetwork(e, vrfNameOf(e))...)
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	case apiv2.NetworkType_NETWORK_TYPE_EXTERNAL:
 		// reach out from public into private and other public networks
 		i.ImportVRFs = []string{vrfNameOf(privatePrimaryNet)}
 		i.ImportPrefixes = prefixesOfNetwork(network, vrfNameOf(privatePrimaryNet))
 
-		nets := []*models.V1MachineNetwork{privatePrimaryNet}
+		nets := []*apiv2.MachineNetwork{privatePrimaryNet}
 
-		if containsDefaultRoute(network.Destinationprefixes) {
-			for _, r := range privateSecondarySharedNets {
-				if containsDefaultRoute(r.Destinationprefixes) {
-					nets = append(nets, r)
-					i.ImportVRFs = append(i.ImportVRFs, vrfNameOf(r))
-				}
-			}
-		}
+		// if containsDefaultRoute(network.DestinationPrefixes) {
+		// 	for _, r := range privateSecondarySharedNets {
+		// 		if containsDefaultRoute(r.DestinationPrefixes) {
+		// 			nets = append(nets, r)
+		// 			i.ImportVRFs = append(i.ImportVRFs, vrfNameOf(r))
+		// 		}
+		// 	}
+		// }
 		i.ImportPrefixesNoExport = prefixesOfNetworks(nets)
 	}
 
@@ -238,15 +237,15 @@ func stringSliceToIPPrefix(s []string, sourceVrf string) []importPrefix {
 	return result
 }
 
-func getDestinationPrefixes(networks []*models.V1MachineNetwork) []importPrefix {
+func getDestinationPrefixes(networks []*apiv2.MachineNetwork) []importPrefix {
 	var result []importPrefix
 	for _, network := range networks {
-		result = append(result, stringSliceToIPPrefix(network.Destinationprefixes, vrfNameOf(network))...)
+		result = append(result, stringSliceToIPPrefix(network.DestinationPrefixes, vrfNameOf(network))...)
 	}
 	return result
 }
 
-func prefixesOfNetworks(networks []*models.V1MachineNetwork) []importPrefix {
+func prefixesOfNetworks(networks []*apiv2.MachineNetwork) []importPrefix {
 	var result []importPrefix
 	for _, network := range networks {
 		result = append(result, prefixesOfNetwork(network, vrfNameOf(network))...)
@@ -254,15 +253,15 @@ func prefixesOfNetworks(networks []*models.V1MachineNetwork) []importPrefix {
 	return result
 }
 
-func prefixesOfNetwork(network *models.V1MachineNetwork, sourceVrf string) []importPrefix {
+func prefixesOfNetwork(network *apiv2.MachineNetwork, sourceVrf string) []importPrefix {
 	return stringSliceToIPPrefix(network.Prefixes, sourceVrf)
 }
 
-func vrfNameOf(n *models.V1MachineNetwork) string {
-	return fmt.Sprintf("vrf%d", *n.Vrf)
+func vrfNameOf(n *apiv2.MachineNetwork) string {
+	return fmt.Sprintf("vrf%d", n.Vrf)
 }
 
-func vrfNamesOf(networks []*models.V1MachineNetwork) []string {
+func vrfNamesOf(networks []*apiv2.MachineNetwork) []string {
 	var result []string
 	for _, n := range networks {
 		result = append(result, vrfNameOf(n))

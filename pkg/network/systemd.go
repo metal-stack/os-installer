@@ -3,7 +3,7 @@ package network
 import (
 	"fmt"
 
-	"github.com/metal-stack/metal-go/api/models"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	"github.com/metal-stack/os-installer/pkg/net"
 )
 
@@ -49,7 +49,7 @@ func newSystemdNetworkdApplier(tmpFile string, data any) net.Applier {
 }
 
 // newSystemdLinkApplier creates a new Applier to configure systemd.link.
-func newSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic *models.V1MachineNic,
+func newSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic *apiv2.MachineNic,
 	tmpFile string, evpnIfaces []EVPNIface) (net.Applier, error) {
 	var mtu int
 
@@ -68,7 +68,7 @@ func newSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 			Index:   nicIndex,
 		},
 		MTU:        mtu,
-		MAC:        *nic.Mac,
+		MAC:        nic.Mac,
 		EVPNIfaces: evpnIfaces,
 	}
 	validator := systemdValidator{tmpFile}

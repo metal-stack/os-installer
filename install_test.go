@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/metal-stack/metal-go/api/models"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	v1 "github.com/metal-stack/os-installer/api/v1"
 	"github.com/metal-stack/v"
 	"github.com/spf13/afero"
@@ -232,7 +232,7 @@ nameserver 8.8.4.4
 		},
 		{
 			name:   "overwrite resolv.conf with custom DNS",
-			config: &v1.InstallerConfig{DNSServers: []*models.V1DNSServer{{IP: new("1.2.3.4")}, {IP: new("5.6.7.8")}}},
+			config: &v1.InstallerConfig{DNSServers: []*apiv2.DNSServer{{Ip: "1.2.3.4"}, {Ip: "5.6.7.8"}}},
 			want: `nameserver 1.2.3.4
 nameserver 5.6.7.8
 `,
@@ -275,8 +275,8 @@ func Test_installer_writeNTPConf(t *testing.T) {
 		name       string
 		fsMocks    func(fs afero.Fs)
 		oss        operatingsystem
-		role       string
-		ntpServers []*models.V1NTPServer
+		role       apiv2.MachineAllocationType
+		ntpServers []*apiv2.NTPServer
 		ntpPath    string
 		want       string
 		wantErr    error
@@ -288,8 +288,8 @@ func Test_installer_writeNTPConf(t *testing.T) {
 			},
 			ntpPath:    "/etc/systemd/timesyncd.conf",
 			oss:        osUbuntu,
-			role:       "machine",
-			ntpServers: []*models.V1NTPServer{{Address: new("custom.1.ntp.org")}, {Address: new("custom.2.ntp.org")}},
+			role:       apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE,
+			ntpServers: []*apiv2.NTPServer{{Address: "custom.1.ntp.org"}, {Address: "custom.2.ntp.org"}},
 			want: `[Time]
 NTP=custom.1.ntp.org custom.2.ntp.org
 `,
@@ -302,7 +302,7 @@ NTP=custom.1.ntp.org custom.2.ntp.org
 			},
 			ntpPath: "/etc/systemd/timesyncd.conf",
 			oss:     osUbuntu,
-			role:    "machine",
+			role:    apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE,
 			want:    "",
 			wantErr: nil,
 		},
@@ -313,8 +313,8 @@ NTP=custom.1.ntp.org custom.2.ntp.org
 			},
 			ntpPath:    "/etc/systemd/timesyncd.conf",
 			oss:        osDebian,
-			role:       "machine",
-			ntpServers: []*models.V1NTPServer{{Address: new("custom.1.ntp.org")}, {Address: new("custom.2.ntp.org")}},
+			role:       apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE,
+			ntpServers: []*apiv2.NTPServer{{Address: "custom.1.ntp.org"}, {Address: "custom.2.ntp.org"}},
 			want: `[Time]
 NTP=custom.1.ntp.org custom.2.ntp.org
 `,
@@ -327,7 +327,7 @@ NTP=custom.1.ntp.org custom.2.ntp.org
 			},
 			ntpPath: "/etc/systemd/timesyncd.conf",
 			oss:     osDebian,
-			role:    "machine",
+			role:    apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE,
 			want:    "",
 			wantErr: nil,
 		},
@@ -338,8 +338,8 @@ NTP=custom.1.ntp.org custom.2.ntp.org
 			},
 			oss:        osAlmalinux,
 			ntpPath:    "/etc/chrony.conf",
-			role:       "machine",
-			ntpServers: []*models.V1NTPServer{{Address: new("custom.1.ntp.org")}, {Address: new("custom.2.ntp.org")}},
+			role:       apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE,
+			ntpServers: []*apiv2.NTPServer{{Address: "custom.1.ntp.org"}, {Address: "custom.2.ntp.org"}},
 			want: `# Welcome to the chrony configuration file. See chrony.conf(5) for more
 # information about usable directives.
 
@@ -383,7 +383,7 @@ makestep 1 3`,
 			},
 			oss:     osAlmalinux,
 			ntpPath: "/etc/chrony.conf",
-			role:    "machine",
+			role:    apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE,
 			want:    "",
 			wantErr: nil,
 		},
@@ -393,8 +393,8 @@ makestep 1 3`,
 				require.NoError(t, afero.WriteFile(fs, "/etc/chrony/chrony.conf", []byte(""), 0644))
 			},
 			ntpPath:    "/etc/chrony/chrony.conf",
-			role:       "firewall",
-			ntpServers: []*models.V1NTPServer{{Address: new("custom.1.ntp.org")}, {Address: new("custom.2.ntp.org")}},
+			role:       apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL,
+			ntpServers: []*apiv2.NTPServer{{Address: "custom.1.ntp.org"}, {Address: "custom.2.ntp.org"}},
 			want: `# Welcome to the chrony configuration file. See chrony.conf(5) for more
 # information about usable directives.
 
@@ -437,7 +437,7 @@ makestep 1 3`,
 				require.NoError(t, afero.WriteFile(fs, "/etc/chrony/chrony.conf", []byte(""), 0644))
 			},
 			ntpPath: "/etc/chrony/chrony.conf",
-			role:    "firewall",
+			role:    apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL,
 			want:    "",
 			wantErr: nil,
 		},

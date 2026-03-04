@@ -13,7 +13,7 @@ import (
 	"time"
 
 	ignitionConfig "github.com/flatcar/ignition/config/v2_4"
-	"github.com/metal-stack/metal-go/api/models"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	v1 "github.com/metal-stack/os-installer/api/v1"
 	"github.com/metal-stack/os-installer/pkg/network"
 	"github.com/metal-stack/os-installer/templates"
@@ -207,7 +207,7 @@ nameserver 8.8.4.4
 	if len(i.config.DNSServers) > 0 {
 		var s strings.Builder
 		for _, dnsServer := range i.config.DNSServers {
-			s.WriteString("nameserver " + *dnsServer.IP + "\n")
+			s.WriteString("nameserver " + dnsServer.Ip + "\n")
 		}
 		content = []byte(s.String())
 
@@ -228,22 +228,22 @@ func (i *installer) writeNTPConf() error {
 	)
 
 	switch i.config.Role {
-	case models.V1MachineAllocationRoleFirewall:
+	case apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL:
 		ntpConfigPath = "/etc/chrony/chrony.conf"
 		s, err = templates.RenderChronyTemplate(templates.Chrony{NTPServers: i.config.NTPServers})
 		if err != nil {
 			return fmt.Errorf("error rendering chrony template %w", err)
 		}
 
-	case models.V1MachineAllocationRoleMachine:
+	case apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE:
 		if i.oss == osDebian || i.oss == osUbuntu {
 			ntpConfigPath = "/etc/systemd/timesyncd.conf"
 			var addresses []string
 			for _, ntp := range i.config.NTPServers {
-				if ntp.Address == nil {
+				if ntp.Address == "" {
 					continue
 				}
-				addresses = append(addresses, *ntp.Address)
+				addresses = append(addresses, ntp.Address)
 			}
 			s = fmt.Sprintf("[Time]\nNTP=%s\n", strings.Join(addresses, " "))
 		}
@@ -418,9 +418,9 @@ func (i *installer) configureNetwork() error {
 
 	var kind network.BareMetalType
 	switch i.config.Role {
-	case models.V1MachineAllocationRoleFirewall:
+	case apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL:
 		kind = network.Firewall
-	case models.V1MachineAllocationRoleMachine:
+	case apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE:
 		kind = network.Machine
 	default:
 		return fmt.Errorf("unknown role:%s", i.config.Role)

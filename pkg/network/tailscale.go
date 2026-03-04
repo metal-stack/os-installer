@@ -28,8 +28,8 @@ func newTailscaleServiceApplier(kb config, v net.Validator) (net.Applier, error)
 
 	data := TailscaleData{
 		MachineID:       kb.MachineUUID,
-		AuthKey:         *kb.VPN.AuthKey,
-		Address:         *kb.VPN.Address,
+		AuthKey:         kb.VPN.AuthKey,
+		Address:         kb.VPN.ControlPlaneAddress,
 		DefaultRouteVrf: defaultRouteVrf,
 	}
 

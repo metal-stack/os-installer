@@ -5,11 +5,11 @@ import (
 	_ "embed"
 	"text/template"
 
-	"github.com/metal-stack/metal-go/api/models"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 )
 
 type Chrony struct {
-	NTPServers []*models.V1NTPServer
+	NTPServers []*apiv2.NTPServer
 }
 
 //go:embed chrony.conf.tpl
