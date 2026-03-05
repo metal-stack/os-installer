@@ -30,7 +30,7 @@ type ifacesApplier struct {
 // newIfacesApplier constructs a new instance of this type.
 func newIfacesApplier(kind BareMetalType, c config) ifacesApplier {
 	d := IfacesData{
-		Comment: versionHeader(c.MachineUUID),
+		Comment: versionHeader(c.Uuid),
 	}
 
 	switch kind {
@@ -73,7 +73,7 @@ func (a *ifacesApplier) Render(w io.Writer, tpl template.Template) error {
 
 // Apply applies the interface configuration with systemd-networkd.
 func (a *ifacesApplier) Apply() {
-	uuid := a.kb.MachineUUID
+	uuid := a.kb.Uuid
 	evpnIfaces := a.data.EVPNIfaces
 
 	// /etc/systemd/network/00 loopback
@@ -84,7 +84,7 @@ func (a *ifacesApplier) Apply() {
 
 	// /etc/systemd/network/1x* lan interfaces
 	offset := 10
-	for i, nic := range a.kb.Nics {
+	for i, nic := range a.kb.machineDetails.Nics {
 		prefix := fmt.Sprintf("lan%d_link_", i)
 		src := mustTmpFile(prefix)
 		applier, err := newSystemdLinkApplier(a.kind, uuid, i, nic, src, evpnIfaces)
@@ -148,7 +148,7 @@ func getEVPNIfaces(kb config) []EVPNIface {
 
 		vrf := int(n.Vrf)
 		e := EVPNIface{}
-		e.Comment = versionHeader(kb.MachineUUID)
+		e.Comment = versionHeader(kb.Uuid)
 		e.SVI.Comment = fmt.Sprintf("# svi (networkid: %s)", n.Network)
 		e.SVI.VLANID = VLANOffset + i
 		e.SVI.Addresses = addBitlen(n.Ips)

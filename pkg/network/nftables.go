@@ -86,7 +86,7 @@ type (
 // newNftablesConfigApplier constructs a new instance of this type.
 func newNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy bool, forwardPolicy ForwardPolicy) net.Applier {
 	data := NftablesData{
-		Comment:       versionHeader(c.MachineUUID),
+		Comment:       versionHeader(c.Uuid),
 		SNAT:          getSNAT(c, enableDNSProxy),
 		ForwardPolicy: string(forwardPolicy),
 		FirewallRules: getFirewallRules(c),
@@ -97,7 +97,7 @@ func newNftablesConfigApplier(c config, validator net.Validator, enableDNSProxy 
 		data.DNSProxyDNAT = getDNSProxyDNAT(c, dnsPort, dnsProxyZone)
 	}
 
-	if c.VPN != nil {
+	if c.Vpn != nil {
 		data.VPN = true
 	}
 

@@ -23,7 +23,7 @@ func newNodeExporterServiceApplier(kb config, v net.Validator) (net.Applier, err
 		return nil, err
 	}
 
-	data := NodeExporterData{Comment: versionHeader(kb.MachineUUID), TenantVrf: tenantVrf}
+	data := NodeExporterData{Comment: versionHeader(kb.Uuid), TenantVrf: tenantVrf}
 
 	return net.NewNetworkApplier(data, v, nil), nil
 }

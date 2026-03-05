@@ -23,8 +23,9 @@ import (
 )
 
 const (
-	installYAML = "/etc/metal/install.yaml"
-	userdata    = "/etc/metal/userdata"
+	allocationYAML     = "/etc/metal/allocation.yaml"
+	machineDetailsYAML = "/etc/metal/machine-details.yaml"
+	userdata           = "/etc/metal/userdata"
 )
 
 func runFromCI() bool {
@@ -39,14 +40,15 @@ func runFromCI() bool {
 }
 
 type installer struct {
-	log    *slog.Logger
-	fs     afero.Fs
-	oss    operatingsystem
-	config *v1.InstallerConfig
-	exec   *cmdexec
+	log            *slog.Logger
+	fs             afero.Fs
+	oss            operatingsystem
+	alloc          *apiv2.MachineAllocation
+	machineDetails *v1.MachineDetails
+	exec           *cmdexec
 }
 
-func Install(log *slog.Logger, config *v1.InstallerConfig) error {
+func Install(log *slog.Logger, alloc *apiv2.MachineAllocation, machineDetails *v1.MachineDetails) error {
 	start := time.Now()
 	fs := afero.OsFs{}
 
@@ -56,10 +58,11 @@ func Install(log *slog.Logger, config *v1.InstallerConfig) error {
 	}
 
 	i := installer{
-		log:    log.WithGroup("os-installer"),
-		fs:     fs,
-		oss:    oss,
-		config: config,
+		log:            log.WithGroup("os-installer"),
+		fs:             fs,
+		oss:            oss,
+		alloc:          alloc,
+		machineDetails: machineDetails,
 		exec: &cmdexec{
 			log: log.WithGroup("cmdexec"),
 			c:   exec.CommandContext,
@@ -81,7 +84,7 @@ func (i *installer) do() error {
 		return err
 	}
 
-	if !i.fileExists(installYAML) {
+	if !i.fileExists(allocationYAML) {
 		return fmt.Errorf("no install.yaml found")
 	}
 
@@ -204,9 +207,9 @@ func (i *installer) writeResolvConf() error {
 nameserver 8.8.4.4
 `)
 
-	if len(i.config.DNSServers) > 0 {
+	if len(i.alloc.DnsServer) > 0 {
 		var s strings.Builder
-		for _, dnsServer := range i.config.DNSServers {
+		for _, dnsServer := range i.alloc.DnsServer {
 			s.WriteString("nameserver " + dnsServer.Ip + "\n")
 		}
 		content = []byte(s.String())
@@ -217,7 +220,7 @@ nameserver 8.8.4.4
 }
 
 func (i *installer) writeNTPConf() error {
-	if len(i.config.NTPServers) == 0 {
+	if len(i.alloc.NtpServer) == 0 {
 		return nil
 	}
 
@@ -227,10 +230,10 @@ func (i *installer) writeNTPConf() error {
 		err           error
 	)
 
-	switch i.config.Role {
+	switch i.alloc.AllocationType {
 	case apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL:
 		ntpConfigPath = "/etc/chrony/chrony.conf"
-		s, err = templates.RenderChronyTemplate(templates.Chrony{NTPServers: i.config.NTPServers})
+		s, err = templates.RenderChronyTemplate(templates.Chrony{NTPServers: i.alloc.NtpServer})
 		if err != nil {
 			return fmt.Errorf("error rendering chrony template %w", err)
 		}
@@ -239,7 +242,7 @@ func (i *installer) writeNTPConf() error {
 		if i.oss == osDebian || i.oss == osUbuntu {
 			ntpConfigPath = "/etc/systemd/timesyncd.conf"
 			var addresses []string
-			for _, ntp := range i.config.NTPServers {
+			for _, ntp := range i.alloc.NtpServer {
 				if ntp.Address == "" {
 					continue
 				}
@@ -250,13 +253,13 @@ func (i *installer) writeNTPConf() error {
 
 		if i.oss == osAlmalinux {
 			ntpConfigPath = "/etc/chrony.conf"
-			s, err = templates.RenderChronyTemplate(templates.Chrony{NTPServers: i.config.NTPServers})
+			s, err = templates.RenderChronyTemplate(templates.Chrony{NTPServers: i.alloc.NtpServer})
 			if err != nil {
 				return fmt.Errorf("error rendering chrony template %w", err)
 			}
 		}
 	default:
-		return fmt.Errorf("unknown role:%s", i.config.Role)
+		return fmt.Errorf("unknown role:%s", i.alloc.AllocationType)
 	}
 
 	content := []byte(s)
@@ -272,10 +275,10 @@ func (i *installer) writeNTPConf() error {
 func (i *installer) buildCMDLine() string {
 	i.log.Info("build kernel cmdline")
 
-	rootUUID := i.config.RootUUID
+	rootUUID := i.machineDetails.RootUUID
 
 	parts := []string{
-		fmt.Sprintf("console=%s", i.config.Console),
+		fmt.Sprintf("console=%s", i.machineDetails.Console),
 		fmt.Sprintf("root=UUID=%s", rootUUID),
 		"init=/sbin/init",
 		"net.ifnames=0",
@@ -298,7 +301,7 @@ func (i *installer) buildCMDLine() string {
 
 func (i *installer) findMDUUID() (mdUUID string, found bool) {
 	i.log.Info("detect software raid uuid")
-	if !i.config.RaidEnabled {
+	if !i.machineDetails.RaidEnabled {
 		return "", false
 	}
 
@@ -310,7 +313,7 @@ func (i *installer) findMDUUID() (mdUUID string, found bool) {
 		i.log.Error("unable to run blkid", "error", err)
 		return "", false
 	}
-	rootUUID := i.config.RootUUID
+	rootUUID := i.machineDetails.RootUUID
 
 	var rootDisk string
 	for line := range strings.SplitSeq(string(blkidOut), "\n") {
@@ -387,7 +390,7 @@ func (i *installer) createMetalUser() error {
 		name:    "passwd",
 		args:    []string{"metal"},
 		timeout: 10 * time.Second,
-		stdin:   i.config.Password + "\n" + i.config.Password + "\n",
+		stdin:   i.machineDetails.Password + "\n" + i.machineDetails.Password + "\n",
 	})
 	if err != nil {
 		return err
@@ -399,7 +402,7 @@ func (i *installer) createMetalUser() error {
 			name:    "passwd",
 			args:    []string{"root"},
 			timeout: 10 * time.Second,
-			stdin:   i.config.Password + "\n" + i.config.Password + "\n",
+			stdin:   i.machineDetails.Password + "\n" + i.machineDetails.Password + "\n",
 		})
 		if err != nil {
 			return err
@@ -411,19 +414,19 @@ func (i *installer) createMetalUser() error {
 
 func (i *installer) configureNetwork() error {
 	i.log.Info("configure network")
-	kb, err := network.New(i.log.WithGroup("networker"), installYAML)
+	kb, err := network.New(i.log.WithGroup("networker"), allocationYAML)
 	if err != nil {
 		return err
 	}
 
 	var kind network.BareMetalType
-	switch i.config.Role {
+	switch i.alloc.AllocationType {
 	case apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL:
 		kind = network.Firewall
 	case apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE:
 		kind = network.Machine
 	default:
-		return fmt.Errorf("unknown role:%s", i.config.Role)
+		return fmt.Errorf("unknown role:%s", i.alloc.AllocationType)
 	}
 
 	err = kb.Validate(kind)
@@ -465,7 +468,7 @@ func (i *installer) copySSHKeys() error {
 		return err
 	}
 
-	err = afero.WriteFile(i.fs, "/home/metal/.ssh/authorized_keys", []byte(i.config.SSHPublicKey), 0600)
+	err = afero.WriteFile(i.fs, "/home/metal/.ssh/authorized_keys", []byte(strings.Join(i.alloc.SshPublicKeys, "\n")), 0600)
 	if err != nil {
 		return err
 	}
@@ -657,7 +660,7 @@ func (i *installer) kernelAndInitrdPath() (kern string, initrd string, err error
 func (i *installer) grubInstall(cmdLine string) error {
 	i.log.Info("install grub")
 	// ttyS1,115200n8
-	serialPort, serialSpeed, found := strings.Cut(i.config.Console, ",")
+	serialPort, serialSpeed, found := strings.Cut(i.machineDetails.Console, ",")
 	if !found {
 		return fmt.Errorf("serial console could not be split into port and speed")
 	}
@@ -682,7 +685,7 @@ GRUB_SERIAL_COMMAND="serial --speed=%s --unit=%s --word=8"
 `, i.oss.BootloaderID(), cmdLine, serialSpeed, serialPort)
 
 	if i.oss == osAlmalinux {
-		defaultGrub += fmt.Sprintf("GRUB_DEVICE=UUID=%s\n", i.config.RootUUID)
+		defaultGrub += fmt.Sprintf("GRUB_DEVICE=UUID=%s\n", i.machineDetails.RootUUID)
 		defaultGrub += "GRUB_ENABLE_BLSCFG=false\n"
 	}
 
@@ -697,7 +700,7 @@ GRUB_SERIAL_COMMAND="serial --speed=%s --unit=%s --word=8"
 		"--boot-directory=/boot",
 		"--bootloader-id=" + i.oss.BootloaderID(),
 	}
-	if i.config.RaidEnabled {
+	if i.machineDetails.RaidEnabled {
 		grubInstallArgs = append(grubInstallArgs, "--no-nvram")
 	}
 
@@ -714,12 +717,12 @@ GRUB_SERIAL_COMMAND="serial --speed=%s --unit=%s --word=8"
 			return err
 		}
 
-		grubInstallArgs = append(grubInstallArgs, fmt.Sprintf("UUID=%s", i.config.RootUUID))
+		grubInstallArgs = append(grubInstallArgs, fmt.Sprintf("UUID=%s", i.machineDetails.RootUUID))
 	} else {
 		grubInstallArgs = append(grubInstallArgs, "--removable")
 	}
 
-	if i.config.RaidEnabled {
+	if i.machineDetails.RaidEnabled {
 		out, err := i.exec.command(&cmdParams{
 			name:    "mdadm",
 			args:    []string{"--examine", "--scan"},
@@ -791,7 +794,7 @@ GRUB_SERIAL_COMMAND="serial --speed=%s --unit=%s --word=8"
 	}
 
 	if i.oss == osAlmalinux {
-		if !i.config.RaidEnabled {
+		if !i.machineDetails.RaidEnabled {
 			return nil
 		}
 

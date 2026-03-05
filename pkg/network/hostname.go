@@ -21,7 +21,7 @@ type (
 
 // newHostnameApplier creates a new Applier to render hostname.
 func newHostnameApplier(kb config, tmpFile string) net.Applier {
-	data := HostnameData{Comment: versionHeader(kb.MachineUUID), Hostname: kb.Hostname}
+	data := HostnameData{Comment: versionHeader(kb.Uuid), Hostname: kb.Hostname}
 	validator := HostnameValidator{tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil)

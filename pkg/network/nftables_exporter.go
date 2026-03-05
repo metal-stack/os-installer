@@ -23,7 +23,7 @@ func NewNftablesExporterServiceApplier(kb config, v net.Validator) (net.Applier,
 		return nil, err
 	}
 
-	data := NftablesExporterData{Comment: versionHeader(kb.MachineUUID), TenantVrf: tenantVrf}
+	data := NftablesExporterData{Comment: versionHeader(kb.Uuid), TenantVrf: tenantVrf}
 
 	return net.NewNetworkApplier(data, v, nil), nil
 }

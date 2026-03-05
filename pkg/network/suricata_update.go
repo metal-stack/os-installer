@@ -23,7 +23,7 @@ func newSuricataUpdateServiceApplier(kb config, v net.Validator) (net.Applier, e
 		return nil, err
 	}
 
-	data := SuricataUpdateData{Comment: versionHeader(kb.MachineUUID), DefaultRouteVrf: defaultRouteVrf}
+	data := SuricataUpdateData{Comment: versionHeader(kb.Uuid), DefaultRouteVrf: defaultRouteVrf}
 
 	return net.NewNetworkApplier(data, v, nil), nil
 }

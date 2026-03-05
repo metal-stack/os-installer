@@ -23,7 +23,7 @@ type (
 
 // newHostsApplier creates a new hosts applier.
 func newHostsApplier(kb config, tmpFile string) net.Applier {
-	data := HostsData{Hostname: kb.Hostname, Comment: versionHeader(kb.MachineUUID), IP: kb.getPrivatePrimaryNetwork().Ips[0]}
+	data := HostsData{Hostname: kb.Hostname, Comment: versionHeader(kb.Uuid), IP: kb.getPrivatePrimaryNetwork().Ips[0]}
 	validator := HostsValidator{tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil)

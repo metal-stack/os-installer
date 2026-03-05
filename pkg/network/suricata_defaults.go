@@ -28,7 +28,7 @@ func newSuricataDefaultsApplier(kb config, tmpFile string) (net.Applier, error) 
 	}
 
 	i := strings.Replace(defaultRouteVrf, "vrf", "vlan", 1)
-	data := SuricataDefaultsData{Comment: versionHeader(kb.MachineUUID), Interface: i}
+	data := SuricataDefaultsData{Comment: versionHeader(kb.Uuid), Interface: i}
 	validator := suricataDefaultsValidator{path: tmpFile}
 
 	return net.NewNetworkApplier(data, validator, nil), nil

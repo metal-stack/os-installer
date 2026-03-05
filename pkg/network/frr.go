@@ -72,7 +72,7 @@ func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string, frrVersio
 			CommonFRRData: CommonFRRData{
 				FRRVersion: FRRVersion,
 				Hostname:   c.Hostname,
-				Comment:    versionHeader(c.MachineUUID),
+				Comment:    versionHeader(c.Uuid),
 				ASN:        int64(net.Asn),
 				RouterID:   routerID(net),
 			},
@@ -84,7 +84,7 @@ func NewFrrConfigApplier(kind BareMetalType, c config, tmpFile string, frrVersio
 			CommonFRRData: CommonFRRData{
 				FRRVersion: FRRVersion,
 				Hostname:   c.Hostname,
-				Comment:    versionHeader(c.MachineUUID),
+				Comment:    versionHeader(c.Uuid),
 				ASN:        int64(net.Asn),
 				RouterID:   routerID(net),
 			},

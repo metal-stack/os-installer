@@ -24,9 +24,9 @@ networks:
     destinationprefixes: []
     ips:
     - 192.168.0.1
-    nat: false
-    networkid: 931b1568-9f2b-4b83-8bcb-cfc8f2a99e85
-    networktype: privateprimaryshared
+    nattype: 1
+    network: 931b1568-9f2b-4b83-8bcb-cfc8f2a99e85
+    networktype: 5
     prefixes:
     - 192.168.0.0/24
     private: true
@@ -37,15 +37,15 @@ networks:
     - 0.0.0.0/0
     ips:
     - 192.168.1.1
-    nat: true
-    networkid: internet
-    networktype: external
+    nattype: 2
+    network: internet
+    networktype: 1
     prefixes:
     - 192.168.1.0/24
     private: false
     underlay: false
     vrf: 104009
-machineuuid: c647818b-0573-45a1-bac4-e311db1df753
+Uuid: c647818b-0573-45a1-bac4-e311db1df753
 sshpublickey: ssh-ed25519 key
 password: a-password
 devmode: false
@@ -73,9 +73,9 @@ networks:
     destinationprefixes: []
     ips:
     - 192.168.0.1
-    nat: false
-    networkid: 931b1568-9f2b-4b83-8bcb-cfc8f2a99e85
-    networktype: privateprimaryshared
+    nattype: 1
+    network: 931b1568-9f2b-4b83-8bcb-cfc8f2a99e85
+    networktype: 5
     prefixes:
     - 192.168.0.0/24
     private: true
@@ -86,15 +86,15 @@ networks:
     - 0.0.0.0/0
     ips:
     - 192.168.1.1
-    nat: true
-    networkid: internet
-    networktype: external
+    nattype: 2
+    network: internet
+    networktype: 1
     prefixes:
     - 192.168.1.0/24
     private: false
     underlay: false
     vrf: 104009
-machineuuid: c647818b-0573-45a1-bac4-e311db1df753
+Uuid: c647818b-0573-45a1-bac4-e311db1df753
 sshpublickey: ssh-ed25519 key
 password: a-password
 devmode: false
@@ -147,8 +147,8 @@ groups:
 	sampleIgnition = `{"ignition":{"config":{},"security":{"tls":{}},"timeouts":{},"version":"2.2.0"}}`
 )
 
-func mustParseInstallYAML(t *testing.T, fs afero.Fs) *v1.InstallerConfig {
-	config, err := parseInstallYAML(fs)
+func mustParseAllocationYAML(t *testing.T, fs afero.Fs) *apiv2.MachineAllocation {
+	config, err := parseAllocationYAML(fs)
 	require.NoError(t, err)
 	return config
 }
@@ -207,11 +207,12 @@ func Test_installer_detectFirmware(t *testing.T) {
 
 func Test_installer_writeResolvConf(t *testing.T) {
 	tests := []struct {
-		name    string
-		fsMocks func(fs afero.Fs)
-		config  *v1.InstallerConfig
-		want    string
-		wantErr error
+		name           string
+		fsMocks        func(fs afero.Fs)
+		alloc          *apiv2.MachineAllocation
+		machineDetails *v1.MachineDetails
+		want           string
+		wantErr        error
 	}{
 		{
 			name: "resolv.conf gets written",
@@ -232,7 +233,7 @@ nameserver 8.8.4.4
 		},
 		{
 			name:   "overwrite resolv.conf with custom DNS",
-			config: &v1.InstallerConfig{DNSServers: []*apiv2.DNSServer{{Ip: "1.2.3.4"}, {Ip: "5.6.7.8"}}},
+			alloc: &apiv2.MachineAllocation{DnsServer: []*apiv2.DNSServer{{Ip: "1.2.3.4"}, {Ip: "5.6.7.8"}}},
 			want: `nameserver 1.2.3.4
 nameserver 5.6.7.8
 `,
@@ -242,17 +243,17 @@ nameserver 5.6.7.8
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := &installer{
-				log:    slog.Default(),
-				fs:     afero.NewMemMapFs(),
-				config: &v1.InstallerConfig{},
+				log:   slog.Default(),
+				fs:    afero.NewMemMapFs(),
+				alloc: &apiv2.MachineAllocation{},
 			}
 
 			if tt.fsMocks != nil {
 				tt.fsMocks(i.fs)
 			}
 
-			if tt.config != nil {
-				i.config = tt.config
+			if tt.alloc != nil {
+				i.alloc = tt.alloc
 			}
 
 			err := i.writeResolvConf()
@@ -445,10 +446,10 @@ makestep 1 3`,
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := &installer{
-				log:    slog.Default(),
-				fs:     afero.NewMemMapFs(),
-				config: &v1.InstallerConfig{Role: tt.role, NTPServers: tt.ntpServers},
-				oss:    tt.oss,
+				log:   slog.Default(),
+				fs:    afero.NewMemMapFs(),
+				alloc: &apiv2.MachineAllocation{AllocationType: tt.role, NtpServer: tt.ntpServers},
+				oss:   tt.oss,
 			}
 
 			if tt.fsMocks != nil {
@@ -553,8 +554,8 @@ func Test_installer_findMDUUID(t *testing.T) {
 					log: log,
 					c:   fakeCmd(t, tt.execMocks...),
 				},
-				fs:     fs,
-				config: &v1.InstallerConfig{RaidEnabled: true, RootUUID: "ace079b5-06be-4429-bbf0-081ea4d7d0d9"},
+				fs:    fs,
+				machineDetails: &v1.MachineDetails{RaidEnabled: true, RootUUID: "ace079b5-06be-4429-bbf0-081ea4d7d0d9"},
 			}
 
 			uuid, found := i.findMDUUID()
@@ -629,8 +630,8 @@ func Test_installer_buildCMDLine(t *testing.T) {
 					log: log,
 					c:   fakeCmd(t, tt.execMocks...),
 				},
-				fs:     fs,
-				config: mustParseInstallYAML(t, fs),
+				fs:    fs,
+				alloc: mustParseAllocationYAML(t, fs),
 			}
 
 			got := i.buildCMDLine()
@@ -982,9 +983,9 @@ GRUB_SERIAL_COMMAND="serial --speed=115200 --unit=1 --word=8"
 					log: log,
 					c:   fakeCmd(t, tt.execMocks...),
 				},
-				fs:     fs,
-				oss:    tt.oss,
-				config: mustParseInstallYAML(t, fs),
+				fs:    fs,
+				oss:   tt.oss,
+				alloc: mustParseAllocationYAML(t, fs),
 			}
 
 			err := i.grubInstall(tt.cmdline)

@@ -206,7 +206,7 @@ func (fc firewallConfigurator) getUnits() (units []unitConfiguration) {
 		},
 	}
 
-	if fc.c.VPN != nil {
+	if fc.c.Vpn != nil {
 		units = append(units, unitConfiguration{
 			unit:         systemdUnitTailscaled,
 			templateFile: tplTailscaled,

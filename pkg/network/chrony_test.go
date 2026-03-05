@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
-	apiv1 "github.com/metal-stack/os-installer/api/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,12 +18,12 @@ func TestChronyServiceEnabler_Enable(t *testing.T) {
 		isErrorExpected bool
 	}{
 		{
-			kb:              config{InstallerConfig: apiv1.InstallerConfig{Networks: []*apiv2.MachineNetwork{network}}},
+			kb:              config{MachineAllocation: &apiv2.MachineAllocation{Networks: []*apiv2.MachineNetwork{network}}},
 			vrf:             "vrf104009",
 			isErrorExpected: false,
 		},
 		{
-			kb:              config{InstallerConfig: apiv1.InstallerConfig{Networks: []*apiv2.MachineNetwork{}}},
+			kb:              config{MachineAllocation: &apiv2.MachineAllocation{Networks: []*apiv2.MachineNetwork{}}},
 			vrf:             "",
 			isErrorExpected: true,
 		},

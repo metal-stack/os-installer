@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"time"
 
-	v1 "github.com/metal-stack/os-installer/api/v1"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	"github.com/metal-stack/v"
 	"github.com/spf13/afero"
 	"gopkg.in/yaml.v3"
@@ -27,17 +27,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	config, err := parseInstallYAML(fs)
+	config, err := parseAllocationYAML(fs)
 	if err != nil {
 		log.Error("installation failed", "error", err)
 		os.Exit(1)
 	}
 
 	i := installer{
-		log:    log.WithGroup("os-installer"),
-		fs:     fs,
-		oss:    oss,
-		config: config,
+		log:   log.WithGroup("os-installer"),
+		fs:    fs,
+		oss:   oss,
+		alloc: config,
 		exec: &cmdexec{
 			log: log.WithGroup("cmdexec"),
 			c:   exec.CommandContext,
@@ -53,15 +53,15 @@ func main() {
 	i.log.Info("installation succeeded", "duration", time.Since(start).String())
 }
 
-func parseInstallYAML(fs afero.Fs) (*v1.InstallerConfig, error) {
-	var config v1.InstallerConfig
-	content, err := afero.ReadFile(fs, installYAML)
+func parseAllocationYAML(fs afero.Fs) (*apiv2.MachineAllocation, error) {
+	var alloc apiv2.MachineAllocation
+	content, err := afero.ReadFile(fs, allocationYAML)
 	if err != nil {
 		return nil, err
 	}
-	err = yaml.Unmarshal(content, &config)
+	err = yaml.Unmarshal(content, &alloc)
 	if err != nil {
 		return nil, err
 	}
-	return &config, nil
+	return &alloc, nil
 }

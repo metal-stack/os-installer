@@ -45,7 +45,7 @@
 #     private: false
 #     underlay: true
 #     vrf: 0
-# machineuuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
+# Uuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
 # sshpublickey: ""
 # password: KAWT5DugqSPAezMl
 # devmode: false
@@ -135,7 +135,7 @@ networks:
     networktype: underlay
     # [IGNORED] Underlay runs in default VRF.
     vrf: 0
-machineuuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
+Uuid: e0ab02d2-27cd-5a5e-8efc-080ba80cf258
 # [IGNORED]
 sshpublickey: ""
 # [IGNORED]

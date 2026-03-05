@@ -24,8 +24,9 @@ type (
 	// config was generated with: https://mengzhuo.github.io/yaml-to-go/.
 	// It represents the input yaml that is needed to render network configuration files.
 	config struct {
-		apiv1.InstallerConfig
-		log *slog.Logger
+		*apiv2.MachineAllocation
+		machineDetails *apiv1.MachineDetails
+		log            *slog.Logger
 	}
 )
 
@@ -38,16 +39,16 @@ func New(log *slog.Logger, path string) (*config, error) {
 		return nil, err
 	}
 
-	installer := &apiv1.InstallerConfig{}
-	err = yaml.Unmarshal(f, &installer)
+	allocation := &apiv2.MachineAllocation{}
+	err = yaml.Unmarshal(f, &allocation)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return &config{
-		InstallerConfig: *installer,
-		log:             log,
+		MachineAllocation: allocation,
+		log:               log,
 	}, nil
 }
 
@@ -102,7 +103,7 @@ func (c config) Validate(kind BareMetalType) error {
 		return errors.New("'asn' of private (machine) resp. underlay (firewall) network must not be missing")
 	}
 
-	if len(c.Nics) == 0 {
+	if len(c.machineDetails.Nics) == 0 {
 		return errors.New("at least one 'nics/nic' definition must be present")
 	}
 
@@ -210,7 +211,7 @@ func (c config) getDefaultRouteVRFName() (string, error) {
 }
 
 func (c config) nicsContainValidMACs() bool {
-	for _, nic := range c.Nics {
+	for _, nic := range c.machineDetails.Nics {
 		if nic.Mac == "" {
 			return false
 		}

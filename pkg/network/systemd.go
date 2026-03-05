@@ -49,7 +49,7 @@ func newSystemdNetworkdApplier(tmpFile string, data any) net.Applier {
 }
 
 // newSystemdLinkApplier creates a new Applier to configure systemd.link.
-func newSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int, nic *apiv2.MachineNic,
+func newSystemdLinkApplier(kind BareMetalType, Uuid string, nicIndex int, nic *apiv2.MachineNic,
 	tmpFile string, evpnIfaces []EVPNIface) (net.Applier, error) {
 	var mtu int
 
@@ -64,7 +64,7 @@ func newSystemdLinkApplier(kind BareMetalType, machineUUID string, nicIndex int,
 
 	data := SystemdLinkData{
 		SystemdCommonData: SystemdCommonData{
-			Comment: versionHeader(machineUUID),
+			Comment: versionHeader(Uuid),
 			Index:   nicIndex,
 		},
 		MTU:        mtu,
