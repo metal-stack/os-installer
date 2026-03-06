@@ -1,4 +1,4 @@
-package droptailer
+package firewallcontroller
 
 import (
 	"log/slog"
@@ -14,35 +14,33 @@ import (
 )
 
 var (
-	//go:embed test/droptailer.service
-	expectedDroptailerSystemdUnit string
+	//go:embed test/firewall-controller.service
+	expectedFirewallControllerSystemdUnit string
 )
 
 func TestWriteSystemdUnit(t *testing.T) {
 	tests := []struct {
 		name        string
-		c           *DroptailerTemplateData
+		c           *FirewallControllerTemplateData
 		wantService string
 		wantChanged bool
 		wantErr     error
 	}{
 		{
 			name: "render",
-			c: &DroptailerTemplateData{
-				Comment: `This is a test.
-Do not edit.`,
-				TenantVrf: "vrf3981",
+			c: &FirewallControllerTemplateData{
+				Comment:         `Do not edit.`,
+				DefaultRouteVrf: "vrf104009",
 			},
-			wantService: expectedDroptailerSystemdUnit,
+			wantService: expectedFirewallControllerSystemdUnit,
 			wantChanged: true,
 			wantErr:     nil,
-		},
-	}
+		}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}
 
-			gotChanged, gotErr := WriteSystemdUnit(t.Context(), &DroptailerConfig{
+			gotChanged, gotErr := WriteSystemdUnit(t.Context(), &FirewallControllerConfig{
 				Log:    slog.Default(),
 				Reload: false,
 				fs:     fs,
@@ -58,7 +56,7 @@ Do not edit.`,
 				return
 			}
 
-			content, err := fs.ReadFile(droptailerServiceUnitPath)
+			content, err := fs.ReadFile(firewallControllerServiceUnitPath)
 			require.NoError(t, err)
 
 			if diff := cmp.Diff(tt.wantService, string(content)); diff != "" {
