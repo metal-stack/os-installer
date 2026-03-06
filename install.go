@@ -146,6 +146,11 @@ func (i *installer) do() error {
 		return err
 	}
 
+	err = i.systemdServices()
+	if err != nil {
+		return err
+	}
+
 	err = i.writeBuildMeta()
 	if err != nil {
 		return err
