@@ -10,30 +10,30 @@ import (
 )
 
 const (
-	nftablesExporterServiceName     = "nftables-exporter.service"
-	nftablesExporterServiceUnitPath = "/etc/systemd/system/" + nftablesExporterServiceName
+	serviceName     = "nftables-exporter.service"
+	serviceUnitPath = "/etc/systemd/system/" + serviceName
 )
 
 var (
 	//go:embed nftables_exporter.service.tpl
-	nftablesExporterTemplateString string
+	templateString string
 )
 
-type DroptailerConfig struct {
+type Config struct {
 	Log    *slog.Logger
 	Reload bool
 	fs     afero.Fs
 }
 
-type DroptailerTemplateData struct {
-	Comment   string
+type TemplateData struct {
+	Comment string
 }
 
-func WriteSystemdUnit(ctx context.Context, cfg *DroptailerConfig, c *DroptailerTemplateData) (changed bool, err error) {
+func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (changed bool, err error) {
 	r, err := renderer.New(&renderer.Config{
 		Log:            cfg.Log,
-		ServiceName:    nftablesExporterServiceName,
-		TemplateString: nftablesExporterTemplateString,
+		ServiceName:    serviceName,
+		TemplateString: templateString,
 		Data:           c,
 		Fs:             cfg.fs,
 	})
@@ -41,5 +41,5 @@ func WriteSystemdUnit(ctx context.Context, cfg *DroptailerConfig, c *DroptailerT
 		return false, err
 	}
 
-	return r.Render(ctx, nftablesExporterServiceUnitPath, cfg.Reload)
+	return r.Render(ctx, serviceUnitPath, cfg.Reload)
 }

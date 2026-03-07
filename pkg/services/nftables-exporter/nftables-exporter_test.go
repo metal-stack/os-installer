@@ -21,14 +21,14 @@ var (
 func TestWriteSystemdUnit(t *testing.T) {
 	tests := []struct {
 		name        string
-		c           *DroptailerTemplateData
+		c           *TemplateData
 		wantService string
 		wantChanged bool
 		wantErr     error
 	}{
 		{
 			name: "render",
-			c: &DroptailerTemplateData{
+			c: &TemplateData{
 				Comment: `Do not edit.`,
 			},
 			wantService: expectedSystemdUnit,
@@ -40,7 +40,7 @@ func TestWriteSystemdUnit(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}
 
-			gotChanged, gotErr := WriteSystemdUnit(t.Context(), &DroptailerConfig{
+			gotChanged, gotErr := WriteSystemdUnit(t.Context(), &Config{
 				Log:    slog.Default(),
 				Reload: false,
 				fs:     fs,
@@ -56,7 +56,7 @@ func TestWriteSystemdUnit(t *testing.T) {
 				return
 			}
 
-			content, err := fs.ReadFile(nftablesExporterServiceUnitPath)
+			content, err := fs.ReadFile(serviceUnitPath)
 			require.NoError(t, err)
 
 			if diff := cmp.Diff(tt.wantService, string(content)); diff != "" {

@@ -1,4 +1,4 @@
-package firewallcontroller
+package nodeexporter
 
 import (
 	"log/slog"
@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	//go:embed test/firewall-controller.service
+	//go:embed test/node-exporter.service
 	expectedSystemdUnit string
 )
 
@@ -29,13 +29,13 @@ func TestWriteSystemdUnit(t *testing.T) {
 		{
 			name: "render",
 			c: &TemplateData{
-				Comment:         `Do not edit.`,
-				DefaultRouteVrf: "vrf104009",
+				Comment: `Do not edit.`,
 			},
 			wantService: expectedSystemdUnit,
 			wantChanged: true,
 			wantErr:     nil,
-		}}
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}

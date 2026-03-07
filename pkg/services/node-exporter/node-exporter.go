@@ -1,4 +1,4 @@
-package droptailer
+package nodeexporter
 
 import (
 	"context"
@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	serviceName     = "droptailer.service"
+	serviceName     = "node-exporter.service"
 	serviceUnitPath = "/etc/systemd/system/" + serviceName
 )
 
 var (
-	//go:embed droptailer.service.tpl
+	//go:embed node_exporter.service.tpl
 	templateString string
 )
 
@@ -26,8 +26,7 @@ type Config struct {
 }
 
 type TemplateData struct {
-	Comment   string
-	TenantVrf string
+	Comment string
 }
 
 func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (changed bool, err error) {

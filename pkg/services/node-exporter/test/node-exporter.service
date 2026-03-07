@@ -1,4 +1,4 @@
-# {{ .Comment }}
+# Do not edit.
 [Unit]
 Description=Node exporter - provides prometheus metrics about the node
 After=network.target

@@ -11,31 +11,31 @@ import (
 )
 
 const (
-	firewallControllerServiceName     = "firewall-controller.service"
-	firewallControllerServiceUnitPath = "/etc/systemd/system/" + firewallControllerServiceName
+	serviceName     = "firewall-controller.service"
+	serviceUnitPath = "/etc/systemd/system/" + serviceName
 )
 
 var (
 	//go:embed firewall_controller.service.tpl
-	firewallControllerTemplateString string
+	templateString string
 )
 
-type FirewallControllerConfig struct {
+type Config struct {
 	Log    *slog.Logger
 	Reload bool
 	fs     afero.Fs
 }
 
-type FirewallControllerTemplateData struct {
+type TemplateData struct {
 	Comment         string
 	DefaultRouteVrf string
 }
 
-func WriteSystemdUnit(ctx context.Context, cfg *FirewallControllerConfig, c *FirewallControllerTemplateData) (changed bool, err error) {
+func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (changed bool, err error) {
 	r, err := renderer.New(&renderer.Config{
 		Log:            cfg.Log,
-		ServiceName:    firewallControllerServiceName,
-		TemplateString: firewallControllerTemplateString,
+		ServiceName:    serviceName,
+		TemplateString: templateString,
 		Data:           c,
 		Fs:             cfg.fs,
 	})
@@ -43,5 +43,5 @@ func WriteSystemdUnit(ctx context.Context, cfg *FirewallControllerConfig, c *Fir
 		return false, err
 	}
 
-	return r.Render(ctx, firewallControllerServiceUnitPath, cfg.Reload)
+	return r.Render(ctx, serviceUnitPath, cfg.Reload)
 }

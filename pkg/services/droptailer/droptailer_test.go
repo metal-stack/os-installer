@@ -15,25 +15,25 @@ import (
 
 var (
 	//go:embed test/droptailer.service
-	expectedDroptailerSystemdUnit string
+	expectedSystemdUnit string
 )
 
 func TestWriteSystemdUnit(t *testing.T) {
 	tests := []struct {
 		name        string
-		c           *DroptailerTemplateData
+		c           *TemplateData
 		wantService string
 		wantChanged bool
 		wantErr     error
 	}{
 		{
 			name: "render",
-			c: &DroptailerTemplateData{
+			c: &TemplateData{
 				Comment: `This is a test.
 Do not edit.`,
 				TenantVrf: "vrf3981",
 			},
-			wantService: expectedDroptailerSystemdUnit,
+			wantService: expectedSystemdUnit,
 			wantChanged: true,
 			wantErr:     nil,
 		},
@@ -42,7 +42,7 @@ Do not edit.`,
 		t.Run(tt.name, func(t *testing.T) {
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}
 
-			gotChanged, gotErr := WriteSystemdUnit(t.Context(), &DroptailerConfig{
+			gotChanged, gotErr := WriteSystemdUnit(t.Context(), &Config{
 				Log:    slog.Default(),
 				Reload: false,
 				fs:     fs,
@@ -58,7 +58,7 @@ Do not edit.`,
 				return
 			}
 
-			content, err := fs.ReadFile(droptailerServiceUnitPath)
+			content, err := fs.ReadFile(serviceUnitPath)
 			require.NoError(t, err)
 
 			if diff := cmp.Diff(tt.wantService, string(content)); diff != "" {
