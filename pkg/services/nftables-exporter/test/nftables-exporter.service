@@ -1,4 +1,4 @@
-# {{ .Comment }}
+# Do not edit.
 [Unit]
 Description=Nftables exporter - provides prometheus metrics for nftables
 After=network.target
