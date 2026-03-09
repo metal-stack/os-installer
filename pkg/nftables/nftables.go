@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/metal-stack/api/go/enum"
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
-	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/os-installer/old/exec"
 	"github.com/metal-stack/os-installer/pkg/network"
 	systemd_renderer "github.com/metal-stack/os-installer/pkg/systemd-service-renderer"
@@ -69,7 +69,7 @@ type (
 		DNSProxyDNAT  DNAT
 		VPN           bool
 		ForwardPolicy string
-		FirewallRules FirewallRules
+		FirewallRules *FirewallRules
 		Input         Input
 	}
 
@@ -124,17 +124,22 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 		return false, err
 	}
 
+	firewallRules, err := getFirewallRules(ctx, cfg)
+	if err != nil {
+		return false, err
+	}
+
 	data := NftablesData{
 		Comment:       comment,
 		SNAT:          snat,
 		ForwardPolicy: string(cfg.ForwardPolicy),
-		FirewallRules: getFirewallRules(ctx, cfg),
+		FirewallRules: firewallRules,
 		Input:         getInput(ctx, cfg),
 		VPN:           cfg.Network.HasVpn(),
 	}
 
 	if cfg.EnableDNSProxy {
-		data.DNSProxyDNAT = getDNSProxyDNAT(c, dnsPort, dnsProxyZone)
+		data.DNSProxyDNAT = getDNSProxyDNAT(ctx, cfg)
 	}
 
 	r, err := renderer.New(&renderer.Config{
@@ -175,18 +180,20 @@ func getInput(ctx context.Context, cfg *Config) Input {
 func getSNAT(ctx context.Context, cfg *Config) ([]SNAT, error) {
 	var (
 		result         []SNAT
-		defaultNetwork models.V1MachineNetwork
+		defaultNetwork *apiv2.MachineNetwork
 		defaultAF      string
 	)
 
-	defaultNetworkName, err := c.getDefaultRouteVRFName()
-	if err == nil {
-		defaultNetwork = *c.GetDefaultRouteNetwork()
-		ip, _ := netip.ParseAddr(defaultNetwork.Ips[0])
-		defaultAF = "ip"
-		if ip.Is6() {
-			defaultAF = "ip6"
-		}
+	defaultNetwork, err := cfg.Network.GetDefaultRouteNetwork()
+	if err != nil {
+		return nil, err
+	}
+	defaultNetworkName := fmt.Sprintf("vrf%d", defaultNetwork.Vrf)
+
+	ip, _ := netip.ParseAddr(defaultNetwork.Ips[0])
+	defaultAF = "ip"
+	if ip.Is6() {
+		defaultAF = "ip6"
 	}
 
 	primaryNetworks, err := cfg.Network.PrivatePrimaryNetworksPrefixes()
@@ -242,16 +249,19 @@ func getSNAT(ctx context.Context, cfg *Config) ([]SNAT, error) {
 	return result, nil
 }
 
-func getDNSProxyDNAT(c config, port, zone string) DNAT {
-	networks := c.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared)
+func getDNSProxyDNAT(ctx context.Context, cfg *Config) DNAT {
 	svis := []string{}
-	for _, n := range networks {
-		svi := fmt.Sprintf("vlan%d", *n.Vrf)
-		svis = append(svis, svi)
+	for _, n := range cfg.Network.AllocationNetworks() {
+		switch n.NetworkType {
+		case apiv2.NetworkType_NETWORK_TYPE_CHILD, apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED:
+			svi := fmt.Sprintf("vlan%d", n.Vrf)
+			svis = append(svis, svi)
+		}
+
 	}
 
-	n := c.GetDefaultRouteNetwork()
-	if n == nil {
+	n, err := cfg.Network.GetDefaultRouteNetwork()
+	if err != nil {
 		return DNAT{}
 	}
 
@@ -269,8 +279,8 @@ func getDNSProxyDNAT(c config, port, zone string) DNAT {
 		InInterfaces: svis,
 		SAddr:        saddr,
 		DAddr:        daddr,
-		Port:         port,
-		Zone:         zone,
+		Port:         dnsPort,
+		Zone:         dnsProxyZone,
 		DestSpec: AddrSpec{
 			AddressFamily: af,
 			Address:       n.Ips[0],
@@ -278,21 +288,21 @@ func getDNSProxyDNAT(c config, port, zone string) DNAT {
 	}
 }
 
-func getFirewallRules(ctx context.Context, cfg *Config) FirewallRules {
-	if c.FirewallRules == nil {
-		return FirewallRules{}
+func getFirewallRules(ctx context.Context, cfg *Config) (*FirewallRules, error) {
+	if cfg.Network.FirewallRules() == nil {
+		return &FirewallRules{}, nil
 	}
 	var (
 		egressRules           = []string{"# egress rules specified during firewall creation"}
 		ingressRules          = []string{"# ingress rules specified during firewall creation"}
-		inputInterfaces       = getInput(c)
+		inputInterfaces       = getInput(ctx, cfg)
 		quotedInputInterfaces []string
 	)
 	for _, i := range inputInterfaces.InInterfaces {
 		quotedInputInterfaces = append(quotedInputInterfaces, "\""+i+"\"")
 	}
 
-	for _, r := range c.FirewallRules.Egress {
+	for _, r := range cfg.Network.FirewallRules().Egress {
 		ports := make([]string, len(r.Ports))
 		for i, v := range r.Ports {
 			ports[i] = strconv.Itoa(int(v))
@@ -300,20 +310,24 @@ func getFirewallRules(ctx context.Context, cfg *Config) FirewallRules {
 		for _, daddr := range r.To {
 			af, err := getAddressFamily(daddr)
 			if err != nil {
-				continue
+				return nil, err
+			}
+			protocolString, err := enum.GetStringValue(r.Protocol)
+			if err != nil {
+				return nil, err
 			}
 			egressRules = append(egressRules,
-				fmt.Sprintf("iifname { %s } %s daddr %s %s dport { %s } counter accept comment %q", strings.Join(quotedInputInterfaces, ","), af, daddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
+				fmt.Sprintf("iifname { %s } %s daddr %s %s dport { %s } counter accept comment %q", strings.Join(quotedInputInterfaces, ","), af, daddr, strings.ToLower(*protocolString), strings.Join(ports, ","), r.Comment))
 		}
 	}
 
-	privatePrimaryNetwork := c.getPrivatePrimaryNetwork()
-	outputInterfacenames := ""
-	if privatePrimaryNetwork != nil && privatePrimaryNetwork.Vrf != nil {
-		outputInterfacenames = fmt.Sprintf("oifname { \"vrf%d\", \"vni%d\", \"vlan%d\" }", *privatePrimaryNetwork.Vrf, *privatePrimaryNetwork.Vrf, *privatePrimaryNetwork.Vrf)
+	privatePrimaryNetwork, err := cfg.Network.PrivatePrimaryNetwork()
+	if err != nil {
+		return nil, err
 	}
+	outputInterfacenames := fmt.Sprintf("oifname { \"vrf%d\", \"vni%d\", \"vlan%d\" }", privatePrimaryNetwork.Vrf, privatePrimaryNetwork.Vrf, privatePrimaryNetwork.Vrf)
 
-	for _, r := range c.FirewallRules.Ingress {
+	for _, r := range cfg.Network.FirewallRules().Ingress {
 		ports := make([]string, len(r.Ports))
 		for i, v := range r.Ports {
 			ports[i] = strconv.Itoa(int(v))
@@ -328,22 +342,26 @@ func getFirewallRules(ctx context.Context, cfg *Config) FirewallRules {
 		} else if outputInterfacenames != "" {
 			destinationSpec = outputInterfacenames
 		} else {
-			c.log.Warn("no to address specified but not private primary network present, skipping this rule", "rule", r)
+			cfg.Log.Warn("no to address specified but not private primary network present, skipping this rule", "rule", r)
 			continue
 		}
 
 		for _, saddr := range r.From {
 			af, err := getAddressFamily(saddr)
 			if err != nil {
-				continue
+				return nil, err
 			}
-			ingressRules = append(ingressRules, fmt.Sprintf("%s %s saddr %s %s dport { %s } counter accept comment %q", destinationSpec, af, saddr, strings.ToLower(r.Protocol), strings.Join(ports, ","), r.Comment))
+			protocolString, err := enum.GetStringValue(r.Protocol)
+			if err != nil {
+				return nil, err
+			}
+			ingressRules = append(ingressRules, fmt.Sprintf("%s %s saddr %s %s dport { %s } counter accept comment %q", destinationSpec, af, saddr, strings.ToLower(*protocolString), strings.Join(ports, ","), r.Comment))
 		}
 	}
-	return FirewallRules{
+	return &FirewallRules{
 		Egress:  egressRules,
 		Ingress: ingressRules,
-	}
+	}, nil
 }
 
 func getAddressFamily(p string) (string, error) {

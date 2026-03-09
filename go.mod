@@ -27,13 +27,13 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/go-openapi/analysis v0.24.2 // indirect
-	github.com/go-openapi/errors v0.22.6 // indirect
+	github.com/go-openapi/analysis v0.24.3 // indirect
+	github.com/go-openapi/errors v0.22.7 // indirect
 	github.com/go-openapi/jsonpointer v0.22.5 // indirect
 	github.com/go-openapi/jsonreference v0.21.5 // indirect
-	github.com/go-openapi/loads v0.23.2 // indirect
+	github.com/go-openapi/loads v0.23.3 // indirect
 	github.com/go-openapi/spec v0.22.4 // indirect
-	github.com/go-openapi/strfmt v0.25.0 // indirect
+	github.com/go-openapi/strfmt v0.26.0 // indirect
 	github.com/go-openapi/swag v0.25.5 // indirect
 	github.com/go-openapi/swag/cmdutils v0.25.5 // indirect
 	github.com/go-openapi/swag/conv v0.25.5 // indirect
@@ -46,24 +46,23 @@ require (
 	github.com/go-openapi/swag/stringutils v0.25.5 // indirect
 	github.com/go-openapi/swag/typeutils v0.25.5 // indirect
 	github.com/go-openapi/swag/yamlutils v0.25.5 // indirect
-	github.com/go-openapi/validate v0.25.1 // indirect
+	github.com/go-openapi/validate v0.25.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/oklog/ulid v1.3.1 // indirect
+	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/vincent-petithory/dataurl v1.0.0 // indirect
-	go.mongodb.org/mongo-driver v1.17.9 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	go4.org v0.0.0-20260112195520-a5071408f32f // indirect
 	golang.org/x/crypto v0.48.0 // indirect
-	golang.org/x/net v0.50.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/net v0.51.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )

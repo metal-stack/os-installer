@@ -13,6 +13,11 @@ const (
 	mtuFirewall = 9216
 	// mtuMachine defines the value for MTU specific to the needs of a machine.
 	mtuMachine = 9000
+
+	// IPv4ZeroCIDR is the CIDR block for the whole IPv4 address space
+	IPv4ZeroCIDR = "0.0.0.0/0"
+	// IPv6ZeroCIDR is the CIDR block for the whole IPv6 address space
+	IPv6ZeroCIDR = "::/0"
 )
 
 type (
@@ -56,6 +61,10 @@ func (n *Network) AllocationNetworks() []*apiv2.MachineNetwork {
 	return n.allocation.Networks
 }
 
+func (n *Network) FirewallRules() *apiv2.FirewallRules {
+	return n.allocation.FirewallRules
+}
+
 func (n *Network) LoopbackCIDRs() (cidrs []string, err error) {
 	var ips []string
 
@@ -81,6 +90,26 @@ func (n *Network) LoopbackCIDRs() (cidrs []string, err error) {
 	}
 
 	return
+}
+
+func (n *Network) PrivatePrimaryNetwork() (*apiv2.MachineNetwork, error) {
+	for _, nw := range n.allocation.Networks {
+		if nw.NetworkType == apiv2.NetworkType_NETWORK_TYPE_CHILD {
+			return nw, nil
+		}
+	}
+
+	for _, nw := range n.allocation.Networks {
+		if nw.Project == nil {
+			continue
+		}
+
+		if nw.NetworkType == apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED && *nw.Project == n.allocation.Project {
+			return nw, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no private primary network present in network allocation")
 }
 
 func (n *Network) PrivatePrimaryIPs() ([]string, error) {
@@ -180,6 +209,26 @@ func (n *Network) EVPNIfaces() (ifaces []EvpnIface, err error) {
 	})
 
 	return
+}
+
+func (n *Network) GetDefaultRouteNetwork() (*apiv2.MachineNetwork, error) {
+	for _, nw := range n.allocation.Networks {
+		if nw.NetworkType == apiv2.NetworkType_NETWORK_TYPE_EXTERNAL {
+			if containsDefaultRoute(nw.DestinationPrefixes) {
+				return nw, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("no network which provides a default route found")
+}
+
+func containsDefaultRoute(prefixes []string) bool {
+	for _, prefix := range prefixes {
+		if prefix == IPv4ZeroCIDR || prefix == IPv6ZeroCIDR {
+			return true
+		}
+	}
+	return false
 }
 
 func loFirewallIps(networks []*apiv2.MachineNetwork) (ips []string, err error) {
