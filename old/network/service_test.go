@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/metal-stack/os-installer/pkg/net"
+	"github.com/metal-stack/os-installer/old/net"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/metal-stack/metal-go/api/models"
-	"github.com/metal-stack/os-installer/pkg/net"
+	"github.com/metal-stack/os-installer/old/net"
 )
 
 const (

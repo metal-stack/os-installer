@@ -7,8 +7,8 @@ import (
 	"path"
 	"text/template"
 
-	"github.com/metal-stack/os-installer/pkg/exec"
-	"github.com/metal-stack/os-installer/pkg/net"
+	"github.com/metal-stack/os-installer/old/exec"
+	"github.com/metal-stack/os-installer/old/net"
 )
 
 // BareMetalType defines the type of configuration to apply.

@@ -9,15 +9,18 @@ require (
 	github.com/flatcar/ignition v0.36.2
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
+	github.com/metal-stack/api v0.0.54-0.20260309104254-e1a94cd811ff
 	github.com/metal-stack/metal-go v0.43.0
 	github.com/metal-stack/metal-lib v0.24.0
 	github.com/metal-stack/v v1.0.3
+	github.com/samber/lo v1.53.0
 	github.com/spf13/afero v1.15.0
 	github.com/stretchr/testify v1.11.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260209202127-80ab13bee0bf.1 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/ajeddeloh/go-json v0.0.0-20160803184958-73d058cf8437 // indirect
@@ -62,5 +65,5 @@ require (
 	golang.org/x/net v0.50.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 )
