@@ -45,6 +45,13 @@ func (n *Network) IsMachine() bool {
 	return n.allocation.AllocationType == apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE
 }
 
+func (n *Network) HasVpn() bool {
+	if n.allocation.Vpn != nil && n.allocation.Vpn.AuthKey != "" {
+		return true
+	}
+	return false
+}
+
 func (n *Network) AllocationNetworks() []*apiv2.MachineNetwork {
 	return n.allocation.Networks
 }
@@ -106,7 +113,7 @@ func (n *Network) PrivatePrimaryIPs() ([]string, error) {
 	return nil, fmt.Errorf("no private primary ip present in network allocation")
 }
 
-func (n *Network) PrivatePrimaryNetworks() ([]string, error) {
+func (n *Network) PrivatePrimaryNetworksPrefixes() ([]string, error) {
 	for _, nw := range n.allocation.Networks {
 		if nw.NetworkType == apiv2.NetworkType_NETWORK_TYPE_CHILD {
 			return nw.Prefixes, nil

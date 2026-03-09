@@ -130,14 +130,11 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 		ForwardPolicy: string(cfg.ForwardPolicy),
 		FirewallRules: getFirewallRules(ctx, cfg),
 		Input:         getInput(ctx, cfg),
+		VPN:           cfg.Network.HasVpn(),
 	}
 
 	if cfg.EnableDNSProxy {
 		data.DNSProxyDNAT = getDNSProxyDNAT(c, dnsPort, dnsProxyZone)
-	}
-
-	if c.VPN != nil {
-		data.VPN = true
 	}
 
 	r, err := renderer.New(&renderer.Config{
@@ -166,9 +163,11 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 
 func getInput(ctx context.Context, cfg *Config) Input {
 	input := Input{}
-	networks := c.GetNetworks(mn.PrivatePrimaryUnshared, mn.PrivatePrimaryShared, mn.PrivateSecondaryShared)
-	for _, n := range networks {
-		input.InInterfaces = append(input.InInterfaces, fmt.Sprintf("vrf%d", *n.Vrf))
+	for _, n := range cfg.Network.AllocationNetworks() {
+		switch n.NetworkType {
+		case apiv2.NetworkType_NETWORK_TYPE_CHILD, apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED:
+			input.InInterfaces = append(input.InInterfaces, fmt.Sprintf("vrf%d", n.Vrf))
+		}
 	}
 	return input
 }
@@ -190,7 +189,7 @@ func getSNAT(ctx context.Context, cfg *Config) ([]SNAT, error) {
 		}
 	}
 
-	primaryNetworks, err := cfg.Network.PrivatePrimaryNetworks()
+	primaryNetworks, err := cfg.Network.PrivatePrimaryNetworksPrefixes()
 	if err != nil {
 		return nil, err
 	}
