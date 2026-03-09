@@ -4,20 +4,25 @@ import (
 	"context"
 	"log/slog"
 
-	renderer "github.com/metal-stack/os-installer/pkg/template-renderer"
+	systemd_renderer "github.com/metal-stack/os-installer/pkg/systemd-service-renderer"
 	"github.com/spf13/afero"
 
 	_ "embed"
 )
 
 const (
-	serviceName     = "firewall-controller.service"
-	serviceUnitPath = "/etc/systemd/system/" + serviceName
+	tailscaleServiceName     = "tailscale.service"
+	tailscaleServiceUnitPath = "/etc/systemd/system/" + tailscaleServiceName
+
+	tailscaledServiceName     = "tailscaled.service"
+	tailscaledServiceUnitPath = "/etc/systemd/system/" + tailscaledServiceName
 )
 
 var (
-	//go:embed firewall_controller.service.tpl
-	templateString string
+	//go:embed tailscale.service.tpl
+	tailscaleTemplateString string
+	//go:embed tailscaled.service.tpl
+	tailscaledTemplateString string
 )
 
 type Config struct {
@@ -29,19 +34,48 @@ type Config struct {
 type TemplateData struct {
 	Comment         string
 	DefaultRouteVrf string
+	TailscaledPort  string
+	MachineID       string
+	AuthKey         string
+	Address         string
 }
 
 func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (changed bool, err error) {
-	r, err := renderer.New(&renderer.Config{
-		Log:            cfg.Log,
-		ServiceName:    serviceName,
-		TemplateString: templateString,
-		Data:           c,
-		Fs:             cfg.fs,
-	})
-	if err != nil {
-		return false, err
+	for _, spec := range []struct {
+		servicePath    string
+		serviceName    string
+		templateString string
+	}{
+		{
+			servicePath:    tailscaleServiceUnitPath,
+			serviceName:    tailscaleServiceName,
+			templateString: tailscaleTemplateString,
+		},
+		{
+			servicePath:    tailscaledServiceUnitPath,
+			serviceName:    tailscaledServiceName,
+			templateString: tailscaledTemplateString,
+		},
+	} {
+		r, err := systemd_renderer.New(&systemd_renderer.Config{
+			ServiceName:    spec.serviceName,
+			Log:            cfg.Log,
+			TemplateString: spec.templateString,
+			Data:           c,
+			Fs:             cfg.fs,
+		})
+		if err != nil {
+			return false, err
+		}
+
+		chg, err := r.Render(ctx, spec.servicePath, cfg.Reload)
+		if err != nil {
+			return chg, err
+		}
+
+		// return changed if one has changed
+		changed = changed || chg
 	}
 
-	return r.Render(ctx, serviceUnitPath, cfg.Reload)
+	return true, nil
 }

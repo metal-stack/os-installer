@@ -12,16 +12,14 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
-	"github.com/coreos/go-systemd/v22/dbus"
 	"github.com/google/uuid"
 	"github.com/spf13/afero"
 )
 
-// Config provides a config for the template renderer
+// Config provides a config for the template Renderer
 type (
 	Config struct {
 		Log            *slog.Logger
-		ServiceName    string
 		TemplateString string
 		Data           any
 		// Validate allows the validation of the rendered template on a given temp file path, optional
@@ -29,18 +27,21 @@ type (
 		Fs       afero.Fs
 	}
 
-	renderer struct {
-		fs          afero.Afero
-		log         *slog.Logger
-		serviceName string
-		tpl         *template.Template
-		data        any
-		validateFn  func(path string) error
+	Renderer struct {
+		fs         afero.Afero
+		log        *slog.Logger
+		tpl        *template.Template
+		data       any
+		validateFn func(path string) error
 	}
 )
 
 // New returns a new template renderer
-func New(c *Config) (*renderer, error) {
+func New(c *Config) (*Renderer, error) {
+	if c == nil {
+		return nil, fmt.Errorf("renderer config is nil")
+	}
+
 	tpl, err := template.New("tpl").Funcs(sprig.FuncMap()).Parse(c.TemplateString)
 	if err != nil {
 		return nil, err
@@ -51,22 +52,21 @@ func New(c *Config) (*renderer, error) {
 		fs = c.Fs
 	}
 
-	return &renderer{
-		log:         c.Log.WithGroup("template-renderer"),
-		serviceName: c.ServiceName,
-		tpl:         tpl,
-		data:        c.Data,
-		validateFn:  c.Validate,
+	return &Renderer{
+		log:        c.Log.WithGroup("template-renderer"),
+		tpl:        tpl,
+		data:       c.Data,
+		validateFn: c.Validate,
 		fs: afero.Afero{
 			Fs: fs,
 		},
 	}, nil
 }
 
-// Render renders the given template to the given destination and reloads the unit if requested.
+// Render renders the given template to the given destination.
 // Returns true when the template has changed.
-func (r *renderer) Render(ctx context.Context, destFile string, reload bool) (changed bool, err error) {
-	r.log.Info("rendering template file", "service-name", r.serviceName, "destination", destFile)
+func (r *Renderer) Render(ctx context.Context, destFile string) (changed bool, err error) {
+	r.log.Info("rendering template file", "destination", destFile)
 
 	stagingFile := fmt.Sprintf("%s-%s", destFile, uuid.New().String())
 
@@ -112,18 +112,10 @@ func (r *renderer) Render(ctx context.Context, destFile string, reload bool) (ch
 		return false, err
 	}
 
-	if !reload {
-		return true, nil
-	}
-
-	if err := r.reload(ctx); err != nil {
-		return true, err
-	}
-
 	return true, err
 }
 
-func (r *renderer) compare(source, target string) bool {
+func (r *Renderer) compare(source, target string) bool {
 	sourceChecksum, err := r.checksum(source)
 	if err != nil {
 		return false
@@ -137,31 +129,7 @@ func (r *renderer) compare(source, target string) bool {
 	return bytes.Equal(sourceChecksum, targetChecksum)
 }
 
-func (r *renderer) reload(ctx context.Context) error {
-	const done = "done"
-
-	dbc, err := dbus.NewWithContext(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to connect to dbus: %w", err)
-	}
-	defer dbc.Close()
-
-	c := make(chan string)
-
-	if _, err = dbc.ReloadUnitContext(ctx, r.serviceName, "replace", c); err != nil {
-		return err
-	}
-
-	job := <-c
-
-	if job != done {
-		return fmt.Errorf("reloading failed: %s", job)
-	}
-
-	return nil
-}
-
-func (r *renderer) checksum(file string) ([]byte, error) {
+func (r *Renderer) checksum(file string) ([]byte, error) {
 	f, err := r.fs.Open(file)
 	if err != nil {
 		return nil, err

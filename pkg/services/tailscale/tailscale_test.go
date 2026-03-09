@@ -14,28 +14,37 @@ import (
 )
 
 var (
-	//go:embed test/firewall-controller.service
-	expectedSystemdUnit string
+	//go:embed test/tailscale.service
+	expectedTailscaleSystemdUnit string
+	//go:embed test/tailscaled.service
+	expectedTailscaledSystemdUnit string
 )
 
 func TestWriteSystemdUnit(t *testing.T) {
 	tests := []struct {
-		name        string
-		c           *TemplateData
-		wantService string
-		wantChanged bool
-		wantErr     error
+		name                  string
+		c                     *TemplateData
+		wantTailscaleService  string
+		wantTailscaledService string
+		wantChanged           bool
+		wantErr               error
 	}{
 		{
 			name: "render",
 			c: &TemplateData{
 				Comment:         `Do not edit.`,
 				DefaultRouteVrf: "vrf104009",
+				TailscaledPort:  "41161",
+				MachineID:       "c0115b51-5e4d-4f92-85c8-1cc504eafdd2",
+				AuthKey:         "a-authkey",
+				Address:         "headscale.metal-stack.io",
 			},
-			wantService: expectedSystemdUnit,
-			wantChanged: true,
-			wantErr:     nil,
-		}}
+			wantTailscaleService:  expectedTailscaleSystemdUnit,
+			wantTailscaledService: expectedTailscaledSystemdUnit,
+			wantChanged:           true,
+			wantErr:               nil,
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fs := afero.Afero{Fs: afero.NewMemMapFs()}
@@ -56,10 +65,17 @@ func TestWriteSystemdUnit(t *testing.T) {
 				return
 			}
 
-			content, err := fs.ReadFile(serviceUnitPath)
+			content, err := fs.ReadFile(tailscaleServiceUnitPath)
 			require.NoError(t, err)
 
-			if diff := cmp.Diff(tt.wantService, string(content)); diff != "" {
+			if diff := cmp.Diff(tt.wantTailscaleService, string(content)); diff != "" {
+				t.Errorf("diff (+got -want):\n%s", diff)
+			}
+
+			content, err = fs.ReadFile(tailscaledServiceUnitPath)
+			require.NoError(t, err)
+
+			if diff := cmp.Diff(tt.wantTailscaledService, string(content)); diff != "" {
 				t.Errorf("diff (+got -want):\n%s", diff)
 			}
 		})

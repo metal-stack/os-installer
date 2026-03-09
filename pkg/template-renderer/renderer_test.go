@@ -28,7 +28,6 @@ func Test_renderer_Render(t *testing.T) {
 		{
 			name: "render an initial unit",
 			c: &renderer.Config{
-				ServiceName:    "test.service",
 				TemplateString: "{{ .Hostname }}",
 				Data: map[string]string{
 					"Hostname": "foo",
@@ -42,7 +41,6 @@ func Test_renderer_Render(t *testing.T) {
 		{
 			name: "render an initial unit and call validation func",
 			c: &renderer.Config{
-				ServiceName:    "test.service",
 				TemplateString: "{{ .Hostname }}",
 				Data: map[string]string{
 					"Hostname": "foo",
@@ -60,7 +58,6 @@ func Test_renderer_Render(t *testing.T) {
 		{
 			name: "update existing file",
 			c: &renderer.Config{
-				ServiceName:    "test.service",
 				TemplateString: "{{ .Hostname }}",
 				Data: map[string]string{
 					"Hostname": "foo",
@@ -77,7 +74,6 @@ func Test_renderer_Render(t *testing.T) {
 		{
 			name: "update existing file that did not change",
 			c: &renderer.Config{
-				ServiceName:    "test.service",
 				TemplateString: "{{ .Hostname }}",
 				Data: map[string]string{
 					"Hostname": "foo",
@@ -105,7 +101,7 @@ func Test_renderer_Render(t *testing.T) {
 				tt.fsMock(fs)
 			}
 
-			gotChanged, gotErr := r.Render(t.Context(), tt.destFile, false) // reload cannot be easily tested here because it interacts with dbus
+			gotChanged, gotErr := r.Render(t.Context(), tt.destFile)
 
 			assert.Equal(t, tt.wantChanged, gotChanged)
 

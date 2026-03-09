@@ -5,7 +5,7 @@ import (
 	_ "embed"
 	"log/slog"
 
-	renderer "github.com/metal-stack/os-installer/pkg/template-renderer"
+	systemd_renderer "github.com/metal-stack/os-installer/pkg/systemd-service-renderer"
 	"github.com/spf13/afero"
 )
 
@@ -31,7 +31,7 @@ type TemplateData struct {
 }
 
 func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (changed bool, err error) {
-	r, err := renderer.New(&renderer.Config{
+	r, err := systemd_renderer.New(&systemd_renderer.Config{
 		Log:            cfg.Log,
 		ServiceName:    serviceName,
 		TemplateString: templateString,
