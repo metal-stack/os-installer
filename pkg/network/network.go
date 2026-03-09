@@ -45,6 +45,10 @@ func (n *Network) IsMachine() bool {
 	return n.allocation.AllocationType == apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE
 }
 
+func (n *Network) AllocationNetworks() []*apiv2.MachineNetwork {
+	return n.allocation.Networks
+}
+
 func (n *Network) LoopbackCIDRs() (cidrs []string, err error) {
 	var ips []string
 
@@ -100,6 +104,26 @@ func (n *Network) PrivatePrimaryIPs() ([]string, error) {
 	}
 
 	return nil, fmt.Errorf("no private primary ip present in network allocation")
+}
+
+func (n *Network) PrivatePrimaryNetworks() ([]string, error) {
+	for _, nw := range n.allocation.Networks {
+		if nw.NetworkType == apiv2.NetworkType_NETWORK_TYPE_CHILD {
+			return nw.Prefixes, nil
+		}
+	}
+
+	for _, nw := range n.allocation.Networks {
+		if nw.Project == nil {
+			continue
+		}
+
+		if nw.NetworkType == apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED && *nw.Project == n.allocation.Project {
+			return nw.Prefixes, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no private primary networks present in network allocation")
 }
 
 func (n *Network) VxlanIDs() (ids []uint64) {

@@ -1,7 +1,0 @@
-# vrf (networkid: storage-net)
-[NetDev]
-Name=vrf3982
-Kind=vrf
-
-[VRF]
-Table=1001
