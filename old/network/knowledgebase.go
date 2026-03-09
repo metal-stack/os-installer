@@ -247,3 +247,12 @@ func versionHeader(uuid string) string {
 	return fmt.Sprintf("# This file was auto generated for machine: '%s' by app version %s.\n# Do not edit.",
 		uuid, version)
 }
+
+func containsDefaultRoute(prefixes []string) bool {
+	for _, prefix := range prefixes {
+		if prefix == IPv4ZeroCIDR || prefix == IPv6ZeroCIDR {
+			return true
+		}
+	}
+	return false
+}

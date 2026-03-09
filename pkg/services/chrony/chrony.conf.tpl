@@ -6,8 +6,8 @@
 # anycast network of 180+ locations to synchronize time from their closest server.
 # See https://blog.cloudflare.com/secure-time/
 
-{{- range .NTPServers}}
-pool {{ .Address }} iburst
+{{- range .NTPServers }}
+pool {{ . }} iburst
 {{- end }}
 
 # This directive specify the location of the file containing ID/key pairs for

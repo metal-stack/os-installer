@@ -13,6 +13,7 @@ import (
 type (
 	Config struct {
 		ServiceName    string
+		Enable         bool
 		Log            *slog.Logger
 		TemplateString string
 		Data           any
@@ -25,6 +26,7 @@ type (
 		log         *slog.Logger
 		r           *renderer.Renderer
 		serviceName string
+		enable      bool
 	}
 )
 
@@ -49,6 +51,7 @@ func New(c *Config) (*systemdRenderer, error) {
 		log:         c.Log.WithGroup("systemd-service-renderer").With("service-name", c.ServiceName),
 		serviceName: c.ServiceName,
 		r:           r,
+		enable:      c.Enable,
 	}, nil
 }
 
@@ -60,6 +63,12 @@ func (r *systemdRenderer) Render(ctx context.Context, destFile string, reload bo
 	changed, err = r.r.Render(ctx, destFile)
 	if err != nil {
 		return changed, err
+	}
+
+	if r.enable {
+		if err := Enable(ctx, r.log, r.serviceName); err != nil {
+			return changed, err
+		}
 	}
 
 	if !reload {
@@ -94,6 +103,22 @@ func Reload(ctx context.Context, log *slog.Logger, unitName string) error {
 
 	if job != done {
 		return fmt.Errorf("reloading failed: %s", job)
+	}
+
+	return nil
+}
+
+func Enable(ctx context.Context, log *slog.Logger, unitName string) error {
+	log.Info("enable systemd service unit", "unit-name", unitName)
+
+	dbc, err := dbus.NewWithContext(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to connect to dbus: %w", err)
+	}
+	defer dbc.Close()
+
+	if _, _, err = dbc.EnableUnitFilesContext(ctx, []string{unitName}, false, false); err != nil {
+		return fmt.Errorf("unable to enable systemd unit: %w", err)
 	}
 
 	return nil
