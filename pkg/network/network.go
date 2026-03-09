@@ -15,9 +15,17 @@ const (
 	mtuMachine = 9000
 )
 
-type Network struct {
-	allocation *apiv2.MachineAllocation
-}
+type (
+	Network struct {
+		allocation *apiv2.MachineAllocation
+	}
+
+	EvpnIface struct {
+		CIDRs  []string
+		VlanID int
+		VrfID  uint64
+	}
+)
 
 func New(allocation *apiv2.MachineAllocation) *Network {
 	return &Network{
@@ -31,6 +39,10 @@ func (n *Network) MTU() int {
 	}
 
 	return mtuMachine
+}
+
+func (n *Network) IsMachine() bool {
+	return n.allocation.AllocationType == apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE
 }
 
 func (n *Network) LoopbackCIDRs() (cidrs []string, err error) {
@@ -100,6 +112,41 @@ func (n *Network) VxlanIDs() (ids []uint64) {
 	}
 
 	ids = lo.Uniq(ids)
+
+	return
+}
+
+func (n *Network) EVPNIfaces() (ifaces []EvpnIface, err error) {
+	if n.allocation.AllocationType == apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE {
+		return nil, fmt.Errorf("no evpn interfaces supported on machines")
+	}
+
+	const vlanOffset = 1000
+
+	for i, nw := range n.allocation.Networks {
+		if nw.Vrf > 0 {
+			var cidrs []string
+
+			for _, ip := range nw.Ips {
+				addr, err := netip.ParseAddr(ip)
+				if err != nil {
+					return nil, err
+				}
+
+				cidrs = append(cidrs, fmt.Sprintf("%s/%d", addr.String(), addr.BitLen()))
+			}
+
+			ifaces = append(ifaces, EvpnIface{
+				CIDRs:  cidrs,
+				VlanID: vlanOffset + i,
+				VrfID:  nw.Vrf,
+			})
+		}
+	}
+
+	ifaces = lo.UniqBy(ifaces, func(iface EvpnIface) uint64 {
+		return iface.VrfID
+	})
 
 	return
 }
