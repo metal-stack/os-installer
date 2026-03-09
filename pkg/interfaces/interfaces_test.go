@@ -19,6 +19,66 @@ import (
 var (
 	//go:embed test
 	expectedInterfaceFiles embed.FS
+
+	machineAllocation = &apiv2.MachineAllocation{
+		AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE,
+		Networks: []*apiv2.MachineNetwork{
+			{
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD,
+				Ips:         []string{"10.0.17.2"},
+			},
+			{
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
+				Ips:         []string{"185.1.2.3"},
+			},
+			{
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
+				Ips:         []string{"100.127.129.1"},
+			},
+			{
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
+				Ips:         []string{"2001::4"},
+			},
+			{
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_UNDERLAY,
+				Ips:         []string{"10.1.0.1"},
+			},
+		},
+	}
+
+	firewallAllocation = &apiv2.MachineAllocation{
+		AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL,
+		Networks: []*apiv2.MachineNetwork{
+			{
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD,
+				Ips:         []string{"10.0.16.2"},
+				Vrf:         3981,
+			},
+			{
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED,
+				Ips:         []string{"10.0.18.2"},
+				Vrf:         3982,
+			},
+			{
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
+				Ips:         []string{"185.1.2.3"},
+				Vrf:         104009,
+			},
+			{
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_UNDERLAY,
+				Ips:         []string{"10.1.0.1"},
+			},
+			{
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
+				Ips:         []string{"100.127.129.1"},
+				Vrf:         104010,
+			},
+			{
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
+				Ips:         []string{"2001::4"},
+			},
+		},
+	}
 )
 
 func Test_configureLoopbackInterface(t *testing.T) {
@@ -29,64 +89,14 @@ func Test_configureLoopbackInterface(t *testing.T) {
 		wantErr      error
 	}{
 		{
-			name: "render machine",
-			allocation: &apiv2.MachineAllocation{
-				AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE,
-				Networks: []*apiv2.MachineNetwork{
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD,
-						Ips:         []string{"10.0.17.2"},
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"185.1.2.3"},
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"100.127.129.1"},
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"2001::4"},
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_UNDERLAY,
-						Ips:         []string{"10.1.0.1"},
-					},
-				},
-			},
+			name:         "render machine",
+			allocation:   machineAllocation,
 			wantFilePath: "machine/00-lo.network",
 			wantErr:      nil,
 		},
 		{
-			name: "render firewall",
-			allocation: &apiv2.MachineAllocation{
-				AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL,
-				Networks: []*apiv2.MachineNetwork{
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD,
-						Ips:         []string{"10.0.16.2"},
-						Vrf:         3981,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED,
-						Ips:         []string{"10.0.18.2"},
-						Vrf:         3982,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"100.127.129.1"},
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"2001::4"},
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_UNDERLAY,
-						Ips:         []string{"10.1.0.1"},
-					},
-				},
-			},
+			name:         "render firewall",
+			allocation:   firewallAllocation,
 			wantFilePath: "firewall/00-lo.network",
 			wantErr:      nil,
 		},
@@ -128,32 +138,8 @@ func Test_configureLanInterface(t *testing.T) {
 		wantErr       error
 	}{
 		{
-			name: "render machine",
-			allocation: &apiv2.MachineAllocation{
-				AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE,
-				Networks: []*apiv2.MachineNetwork{
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD,
-						Ips:         []string{"10.0.17.2"},
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"185.1.2.3"},
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"100.127.129.1"},
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"2001::4"},
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_UNDERLAY,
-						Ips:         []string{"10.1.0.1"},
-					},
-				},
-			},
+			name:       "render machine",
+			allocation: machineAllocation,
 			nics: []*apiv2.MachineNic{
 				{
 					Mac: "00:03:00:11:11:01",
@@ -171,40 +157,8 @@ func Test_configureLanInterface(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "render firewall",
-			allocation: &apiv2.MachineAllocation{
-				AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL,
-				Networks: []*apiv2.MachineNetwork{
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD,
-						Ips:         []string{"10.0.16.2"},
-						Vrf:         3981,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED,
-						Ips:         []string{"10.0.18.2"},
-						Vrf:         3982,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"185.1.2.3"},
-						Vrf:         104009,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"100.127.129.1"},
-						Vrf:         104010,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"2001::4"},
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_UNDERLAY,
-						Ips:         []string{"10.1.0.1"},
-					},
-				},
-			},
+			name:       "render firewall",
+			allocation: firewallAllocation,
 			nics: []*apiv2.MachineNic{
 				{
 					Mac: "00:03:00:11:11:01",
@@ -261,40 +215,8 @@ func Test_configureBridges(t *testing.T) {
 		wantErr       error
 	}{
 		{
-			name: "render firewall",
-			allocation: &apiv2.MachineAllocation{
-				AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL,
-				Networks: []*apiv2.MachineNetwork{
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD,
-						Ips:         []string{"10.0.16.2"},
-						Vrf:         3981,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED,
-						Ips:         []string{"10.0.18.2"},
-						Vrf:         3982,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"185.1.2.3"},
-						Vrf:         104009,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_UNDERLAY,
-						Ips:         []string{"10.1.0.1"},
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"100.127.129.1"},
-						Vrf:         104010,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"2001::4"},
-					},
-				},
-			},
+			name:       "render firewall",
+			allocation: firewallAllocation,
 			wantFilePaths: []string{
 				"firewall/20-bridge.network",
 				"firewall/20-bridge.netdev",
@@ -340,40 +262,8 @@ func Test_configureEVPN(t *testing.T) {
 		wantErr       error
 	}{
 		{
-			name: "render firewall",
-			allocation: &apiv2.MachineAllocation{
-				AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL,
-				Networks: []*apiv2.MachineNetwork{
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD,
-						Ips:         []string{"10.0.16.2"},
-						Vrf:         3981,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED,
-						Ips:         []string{"10.0.18.2"},
-						Vrf:         3982,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"185.1.2.3"},
-						Vrf:         104009,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_UNDERLAY,
-						Ips:         []string{"10.1.0.1"},
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"100.127.129.1"},
-						Vrf:         104010,
-					},
-					{
-						NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-						Ips:         []string{"2001::4"},
-					},
-				},
-			},
+			name:       "render firewall",
+			allocation: firewallAllocation,
 			wantFilePaths: []string{
 				"firewall/30-svi-3981.network",
 				"firewall/30-svi-3981.netdev",
