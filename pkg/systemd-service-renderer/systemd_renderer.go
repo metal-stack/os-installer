@@ -66,17 +66,17 @@ func (r *systemdRenderer) Render(ctx context.Context, destFile string, reload bo
 		return changed, nil
 	}
 
-	if err := r.reload(ctx); err != nil {
+	if err := Reload(ctx, r.log, r.serviceName); err != nil {
 		return true, err
 	}
 
 	return true, err
 }
 
-func (r *systemdRenderer) reload(ctx context.Context) error {
+func Reload(ctx context.Context, log *slog.Logger, unitName string) error {
 	const done = "done"
 
-	r.log.Info("reloading systemd service unit")
+	log.Info("reloading systemd service unit")
 
 	dbc, err := dbus.NewWithContext(ctx)
 	if err != nil {
@@ -86,7 +86,7 @@ func (r *systemdRenderer) reload(ctx context.Context) error {
 
 	c := make(chan string)
 
-	if _, err = dbc.ReloadUnitContext(ctx, r.serviceName, "replace", c); err != nil {
+	if _, err = dbc.ReloadUnitContext(ctx, unitName, "replace", c); err != nil {
 		return err
 	}
 

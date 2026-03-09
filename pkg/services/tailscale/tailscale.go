@@ -16,6 +16,8 @@ const (
 
 	tailscaledServiceName     = "tailscaled.service"
 	tailscaledServiceUnitPath = "/etc/systemd/system/" + tailscaledServiceName
+
+	tailscaledDefaultPort = "41641"
 )
 
 var (
@@ -41,6 +43,10 @@ type TemplateData struct {
 }
 
 func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (changed bool, err error) {
+	if c.TailscaledPort == "" {
+		c.TailscaledPort = tailscaledDefaultPort
+	}
+
 	for _, spec := range []struct {
 		servicePath    string
 		serviceName    string
@@ -77,5 +83,5 @@ func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (change
 		changed = changed || chg
 	}
 
-	return true, nil
+	return changed, nil
 }

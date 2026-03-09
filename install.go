@@ -93,6 +93,12 @@ func (i *installer) do() error {
 		}
 	}
 
+	err = i.writeHostname()
+	if err != nil {
+		i.log.Warn("writing hostname failed", "error", err)
+		return err
+	}
+
 	err = i.writeResolvConf()
 	if err != nil {
 		i.log.Warn("writing resolv.conf failed", "error", err)
@@ -193,6 +199,10 @@ func (i *installer) fileExists(filename string) bool {
 		return false
 	}
 	return !info.IsDir()
+}
+
+func (i *installer) writeHostname() error {
+	return afero.WriteFile(i.fs, "/etc/hostname", []byte(i.config.Hostname), 0644)
 }
 
 func (i *installer) writeResolvConf() error {

@@ -34,7 +34,7 @@ func TestWriteSystemdUnit(t *testing.T) {
 			c: &TemplateData{
 				Comment:         `Do not edit.`,
 				DefaultRouteVrf: "vrf104009",
-				TailscaledPort:  "41161",
+				TailscaledPort:  "41641",
 				MachineID:       "c0115b51-5e4d-4f92-85c8-1cc504eafdd2",
 				AuthKey:         "a-authkey",
 				Address:         "headscale.metal-stack.io",
