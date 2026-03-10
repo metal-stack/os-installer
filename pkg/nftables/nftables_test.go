@@ -202,6 +202,7 @@ var (
 
 	firewallSharedAllocation = &apiv2.MachineAllocation{
 		AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL,
+		Project:        "dd429d45-db03-4627-887f-bf7761d376a5",
 		Networks: []*apiv2.MachineNetwork{
 			{
 				Network:     "partition-storage",
@@ -209,7 +210,8 @@ var (
 				Prefixes:    []string{"10.0.18.0/22"},
 				Ips:         []string{"10.0.18.2"},
 				Vrf:         3982,
-				// NatType:     apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
+				Project:     new("dd429d45-db03-4627-887f-bf7761d376a5"),
+				NatType:     apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
 			},
 			{
 				Network:             "internet",
@@ -278,7 +280,7 @@ func TestRender(t *testing.T) {
 			name:           "render firewall shared",
 			allocation:     firewallSharedAllocation,
 			wantFilePath:   "nftrules_shared",
-			enableDNSProxy: false,
+			enableDNSProxy: true,
 			forwardPolicy:  ForwardPolicyDrop,
 			wantErr:        nil,
 		},
