@@ -233,6 +233,55 @@ var (
 			},
 		},
 	}
+
+	firewallIPv6Allocation = &apiv2.MachineAllocation{
+		AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL,
+		Networks: []*apiv2.MachineNetwork{
+			{
+				Network:     "379d294d-22e8-4aed-82e1-62c6c2f08d6a",
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD,
+				Prefixes:    []string{"2002::/64"},
+				Ips:         []string{"2002::1"},
+				Vrf:         3981,
+			},
+			{
+				Network:     "partition-storage",
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED,
+				Prefixes:    []string{"10.0.18.0/22"},
+				Ips:         []string{"10.0.18.2"},
+				Vrf:         3982,
+				// FIXME clarify if this is required
+				// NatType:     apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
+			},
+			{
+				Network:             "internet",
+				NetworkType:         apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
+				Prefixes:            []string{"2a02:c00:20::/45"},
+				Ips:                 []string{"2a02:c00:20::1"},
+				DestinationPrefixes: []string{"::/0"},
+				Vrf:                 104009,
+				NatType:             apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
+			},
+			{
+				Network:     "underlay",
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_UNDERLAY,
+				Ips:         []string{"10.1.0.1"},
+			},
+			{
+				Network:     "mpls",
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
+				Prefixes:    []string{"100.127.129.0/22"},
+				Ips:         []string{"100.127.129.1"},
+				Vrf:         104010,
+				NatType:     apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
+			},
+			{
+				Network:     "internet-v6",
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
+				Ips:         []string{"2001::4"},
+			},
+		},
+	}
 )
 
 func TestRender(t *testing.T) {
@@ -280,6 +329,14 @@ func TestRender(t *testing.T) {
 			name:           "render firewall shared",
 			allocation:     firewallSharedAllocation,
 			wantFilePath:   "nftrules_shared",
+			enableDNSProxy: true,
+			forwardPolicy:  ForwardPolicyDrop,
+			wantErr:        nil,
+		},
+		{
+			name:           "render firewall ipv6",
+			allocation:     firewallIPv6Allocation,
+			wantFilePath:   "nftrules_ipv6",
 			enableDNSProxy: true,
 			forwardPolicy:  ForwardPolicyDrop,
 			wantErr:        nil,
