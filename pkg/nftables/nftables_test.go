@@ -75,11 +75,19 @@ func TestRender(t *testing.T) {
 		wantErr        error
 	}{
 		{
-			name:           "render firewall",
+			name:           "render firewall, forward drop",
 			allocation:     firewallAllocation,
 			wantFilePath:   "nftrules",
 			enableDNSProxy: false,
 			forwardPolicy:  ForwardPolicyDrop,
+			wantErr:        nil,
+		},
+		{
+			name:           "render firewall, forward accept",
+			allocation:     firewallAllocation,
+			wantFilePath:   "nftrules_accept_forwarding",
+			enableDNSProxy: false,
+			forwardPolicy:  ForwardPolicyAccept,
 			wantErr:        nil,
 		},
 	}
