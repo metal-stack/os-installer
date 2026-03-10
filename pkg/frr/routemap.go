@@ -80,8 +80,9 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 	privateSecondarySharedNets := cfg.Network.GetNetworks(mn.PrivateSecondaryShared)
 
 	switch network.NetworkType {
-	// case mn.PrivatePrimaryUnshared:
-	// 	fallthrough
+	case mn.PrivatePrimaryUnshared:
+		fallthrough
+	// case mn.PrivatePrimaryShared:
 	case apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED:
 		// reach out from private network into public networks
 		i.ImportVRFs = vrfNamesOf(externalNets)
