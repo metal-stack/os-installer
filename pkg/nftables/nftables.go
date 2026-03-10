@@ -159,6 +159,8 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 		return changed, err
 	}
 
+	// FIXME validate generated rule file before reloading
+
 	if cfg.Reload && changed {
 		if err := systemd_renderer.Reload(ctx, cfg.Log, serviceName); err != nil {
 			return changed, err

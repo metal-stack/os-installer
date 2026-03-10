@@ -46,6 +46,10 @@ func (n *Network) MTU() int {
 	return mtuMachine
 }
 
+func (n *Network) Hostname() string {
+	return n.allocation.Hostname
+}
+
 func (n *Network) IsMachine() bool {
 	return n.allocation.AllocationType == apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE
 }
@@ -90,6 +94,15 @@ func (n *Network) LoopbackCIDRs() (cidrs []string, err error) {
 	}
 
 	return
+}
+
+func (n *Network) UnderlayNetwork() (*apiv2.MachineNetwork, error) {
+	for _, nw := range n.allocation.Networks {
+		if nw.NetworkType == apiv2.NetworkType_NETWORK_TYPE_UNDERLAY {
+			return nw, nil
+		}
+	}
+	return nil, fmt.Errorf("no underlay network present in network allocation")
 }
 
 func (n *Network) PrivatePrimaryNetwork() (*apiv2.MachineNetwork, error) {
@@ -211,10 +224,20 @@ func (n *Network) EVPNIfaces() (ifaces []EvpnIface, err error) {
 	return
 }
 
+func (n *Network) GetNetworks(networkType apiv2.NetworkType) []*apiv2.MachineNetwork {
+	var networks []*apiv2.MachineNetwork
+	for _, nw := range n.allocation.Networks {
+		if nw.NetworkType == networkType {
+			networks = append(networks, nw)
+		}
+	}
+	return networks
+}
+
 func (n *Network) GetDefaultRouteNetwork() (*apiv2.MachineNetwork, error) {
 	for _, nw := range n.allocation.Networks {
 		if nw.NetworkType == apiv2.NetworkType_NETWORK_TYPE_EXTERNAL {
-			if containsDefaultRoute(nw.DestinationPrefixes) {
+			if ContainsDefaultRoute(nw.DestinationPrefixes) {
 				return nw, nil
 			}
 		}
@@ -222,7 +245,7 @@ func (n *Network) GetDefaultRouteNetwork() (*apiv2.MachineNetwork, error) {
 	return nil, fmt.Errorf("no network which provides a default route found")
 }
 
-func containsDefaultRoute(prefixes []string) bool {
+func ContainsDefaultRoute(prefixes []string) bool {
 	for _, prefix := range prefixes {
 		if prefix == IPv4ZeroCIDR || prefix == IPv6ZeroCIDR {
 			return true
