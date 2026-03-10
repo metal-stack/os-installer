@@ -66,7 +66,7 @@ func New(c *Config) (*Renderer, error) {
 // Render renders the given template to the given destination.
 // Returns true when the template has changed.
 func (r *Renderer) Render(ctx context.Context, destFile string) (changed bool, err error) {
-	r.log.Info("rendering template file", "destination", destFile)
+	r.log.Info("rendering template file", "destination", destFile, "data", r.data)
 
 	stagingFile := fmt.Sprintf("%s-%s", destFile, uuid.New().String())
 
