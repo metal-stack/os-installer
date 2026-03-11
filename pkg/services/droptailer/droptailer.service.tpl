@@ -1,7 +1,4 @@
-{{ range $line := split "\n" .Comment }}
-# {{ $line }}
-{{ end }}
-
+# {{ .Comment }}
 [Unit]
 Description=Droptailer
 After=network.target
