@@ -11,7 +11,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/metal-stack/api v0.0.54-0.20260309104254-e1a94cd811ff
 	github.com/metal-stack/metal-go v0.43.0
-	github.com/metal-stack/metal-lib v0.24.0
 	github.com/metal-stack/v v1.0.3
 	github.com/samber/lo v1.53.0
 	github.com/spf13/afero v1.15.0

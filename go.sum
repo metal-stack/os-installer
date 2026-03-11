@@ -95,8 +95,6 @@ github.com/metal-stack/api v0.0.54-0.20260309104254-e1a94cd811ff h1:668iZE3tvpbh
 github.com/metal-stack/api v0.0.54-0.20260309104254-e1a94cd811ff/go.mod h1:SAtqZaD4JvOn+NVc6bTlKzL2EDoj/QrlHF72ZMw+Btk=
 github.com/metal-stack/metal-go v0.43.0 h1:uODD0YCwnAYzyvFxWNakZrymBoMz1FAvP5hkhsR83VQ=
 github.com/metal-stack/metal-go v0.43.0/go.mod h1:GSfXrAj55LGsUSMHWGDsmq5n056NG0yb1JM8bgfvKOw=
-github.com/metal-stack/metal-lib v0.24.0 h1:wvQQPWIXcA2tP+I6zAHUNdtVLLJfQnnV9yG2SoqUkz4=
-github.com/metal-stack/metal-lib v0.24.0/go.mod h1:oITaqj/BtB9vDKM66jCXkeA+4D0eTZElgIKal5vtiNY=
 github.com/metal-stack/v v1.0.3 h1:Sh2oBlnxrCUD+mVpzfC8HiqL045YWkxs0gpTvkjppqs=
 github.com/metal-stack/v v1.0.3/go.mod h1:YTahEu7/ishwpYKnp/VaW/7nf8+PInogkfGwLcGPdXg=
 github.com/mitchellh/copystructure v1.2.0 h1:vpKXTN4ewci03Vljg/q9QvCGUDttBOGBIa15WveJJGw=
