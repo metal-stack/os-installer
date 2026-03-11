@@ -20,9 +20,9 @@ import (
 )
 
 const (
-	serviceName     = "nftables.service"
-	serviceUnitPath = "/etc/systemd/system/" + serviceName
-
+	// nftables system service name
+	serviceName = "nftables.service"
+	// nftables rules file
 	nftrulesPath = "/etc/nftables/rules"
 
 	// Set up additional conntrack zone for DNS traffic.
@@ -31,9 +31,7 @@ const (
 	// Isolating traffic to special zone solves the problem.
 	// Zone number(3) was obtained by experiments.
 	dnsProxyZone = "3"
-
 	dnsPort      = "domain"
-	systemctlBin = "/bin/systemctl"
 
 	// ForwardPolicyDrop drops packets which try to go through the forwarding chain
 	ForwardPolicyDrop = ForwardPolicy("drop")
@@ -385,13 +383,13 @@ func getAddressFamily(p string) (string, error) {
 }
 
 // Validate validates network interfaces configuration.
-func (v NftablesValidator) Validate() error {
-	v.log.Info("running 'nft --check --file' to validate changes.", "file", v.path)
+func Validate(cfg *Config) error {
+	cfg.Log.Info("running 'nft --check --file' to validate changes.", "file", nftrulesPath)
 
-	cmd := exec.Command("nft", "--check", "--file", v.path)
+	cmd := exec.Command("nft", "--check", "--file", nftrulesPath)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		v.log.Error("nft validation failed", "output", string(out), "error", err)
+		cfg.Log.Error("nft validation failed", "output", string(out), "error", err)
 		return err
 	}
 	return nil
