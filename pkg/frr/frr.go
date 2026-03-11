@@ -7,6 +7,7 @@ import (
 	"net/netip"
 	"os/exec"
 
+	"github.com/Masterminds/semver/v3"
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	"github.com/metal-stack/os-installer/pkg/network"
 	systemd_renderer "github.com/metal-stack/os-installer/pkg/systemd-service-renderer"
@@ -52,6 +53,8 @@ type (
 		Validate bool
 
 		Network *network.Network
+
+		FRRVersion *semver.Version
 
 		fs afero.Fs
 	}
@@ -220,13 +223,12 @@ func assembleVRFs(cfg *Config) ([]VRF, error) {
 		frr    *FRR
 	)
 
-	// FIXME do we need to support older frr versions <9
-	// if frrVersion != nil {
-	// 	frr = &FRR{
-	// 		Major: frrVersion.Major(),
-	// 		Minor: frrVersion.Minor(),
-	// 	}
-	// }
+	if cfg.FRRVersion != nil {
+		frr = &FRR{
+			Major: cfg.FRRVersion.Major(),
+			Minor: cfg.FRRVersion.Minor(),
+		}
+	}
 
 	for _, n := range cfg.Network.AllocationNetworks() {
 		switch n.NetworkType {
