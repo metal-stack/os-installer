@@ -62,12 +62,26 @@ func (n *Network) HasVpn() bool {
 	return false
 }
 
+func (n *Network) Vpn() *apiv2.MachineVPN {
+	if n.allocation.Vpn != nil && n.allocation.Vpn.AuthKey != "" {
+		return n.allocation.Vpn
+	}
+	return nil
+}
+
 func (n *Network) AllocationNetworks() []*apiv2.MachineNetwork {
 	return n.allocation.Networks
 }
 
 func (n *Network) FirewallRules() *apiv2.FirewallRules {
 	return n.allocation.FirewallRules
+}
+
+func (n *Network) NTPServers() (ntpServers []string) {
+	for _, ntpserver := range n.allocation.NtpServer {
+		ntpServers = append(ntpServers, ntpserver.Address)
+	}
+	return
 }
 
 func (n *Network) LoopbackCIDRs() (cidrs []string, err error) {
@@ -271,6 +285,22 @@ func (n *Network) GetDefaultRouteNetwork() (*apiv2.MachineNetwork, error) {
 		}
 	}
 	return nil, fmt.Errorf("no network which provides a default route found")
+}
+
+func (n *Network) GetDefaultRouteNetworkVrfName() (string, error) {
+	nw, err := n.GetDefaultRouteNetwork()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("vrf%d", nw.Vrf), nil
+}
+
+func (n *Network) GetTenantNetworkVrfName() (string, error) {
+	nw, err := n.PrivatePrimaryNetwork()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("vrf%d", nw.Vrf), nil
 }
 
 func ContainsDefaultRoute(prefixes []string) bool {
