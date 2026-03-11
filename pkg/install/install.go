@@ -1,4 +1,4 @@
-package main
+package install
 
 import (
 	"fmt"
@@ -885,4 +885,17 @@ func (i *installer) getKernelVersion() (string, error) {
 	}
 
 	return version, nil
+}
+
+func ParseInstallYAML(fs afero.Fs) (*v1.InstallerConfig, error) {
+	var config v1.InstallerConfig
+	content, err := afero.ReadFile(fs, installYAML)
+	if err != nil {
+		return nil, err
+	}
+	err = yaml.Unmarshal(content, &config)
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
 }

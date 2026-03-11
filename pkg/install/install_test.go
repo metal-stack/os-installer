@@ -1,4 +1,4 @@
-package main
+package install
 
 import (
 	"fmt"
@@ -148,7 +148,7 @@ groups:
 )
 
 func mustParseInstallYAML(t *testing.T, fs afero.Fs) *v1.InstallerConfig {
-	config, err := parseInstallYAML(fs)
+	config, err := ParseInstallYAML(fs)
 	require.NoError(t, err)
 	return config
 }
