@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net/netip"
+	"os/exec"
 	"strconv"
 	"strings"
 
 	"github.com/metal-stack/api/go/enum"
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
-	"github.com/metal-stack/os-installer/old/exec"
 	"github.com/metal-stack/os-installer/pkg/network"
 	systemd_renderer "github.com/metal-stack/os-installer/pkg/systemd-service-renderer"
 	renderer "github.com/metal-stack/os-installer/pkg/template-renderer"
@@ -387,5 +387,12 @@ func getAddressFamily(p string) (string, error) {
 // Validate validates network interfaces configuration.
 func (v NftablesValidator) Validate() error {
 	v.log.Info("running 'nft --check --file' to validate changes.", "file", v.path)
-	return exec.NewVerboseCmd("nft", "--check", "--file", v.path).Run()
+
+	cmd := exec.Command("nft", "--check", "--file", v.path)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		v.log.Error("nft validation failed", "output", string(out), "error", err)
+		return err
+	}
+	return nil
 }

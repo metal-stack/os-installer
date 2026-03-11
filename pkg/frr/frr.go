@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/netip"
+	"os/exec"
 
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
-	"github.com/metal-stack/os-installer/old/exec"
 	"github.com/metal-stack/os-installer/pkg/network"
 	systemd_renderer "github.com/metal-stack/os-installer/pkg/systemd-service-renderer"
 	renderer "github.com/metal-stack/os-installer/pkg/template-renderer"
@@ -209,8 +209,12 @@ func routerID(net *apiv2.MachineNetwork) string {
 // Validate can be used to run validation on FRR configuration using vtysh.
 func validate(frrConfigPath string) error {
 	vtysh := fmt.Sprintf("vtysh --dryrun --inputfile %s", frrConfigPath)
-
-	return exec.NewVerboseCmd("bash", "-c", vtysh, frrConfigPath).Run()
+	cmd := exec.Command("bash", "-c", vtysh, frrConfigPath)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("vtysh validation failed, output:%s error %w", string(out), err)
+	}
+	return nil
 }
 
 func assembleVRFs(cfg *Config) ([]VRF, error) {
