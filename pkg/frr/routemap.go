@@ -40,27 +40,6 @@ type (
 	}
 )
 
-func (i *importRule) bySourceVrf() map[string]ImportSettings {
-	r := map[string]ImportSettings{}
-	for _, vrf := range i.ImportVRFs {
-		r[vrf] = ImportSettings{}
-	}
-
-	for _, pfx := range i.ImportPrefixes {
-		e := r[pfx.SourceVRF]
-		e.ImportPrefixes = append(e.ImportPrefixes, pfx)
-		r[pfx.SourceVRF] = e
-	}
-
-	for _, pfx := range i.ImportPrefixesNoExport {
-		e := r[pfx.SourceVRF]
-		e.ImportPrefixesNoExport = append(e.ImportPrefixesNoExport, pfx)
-		r[pfx.SourceVRF] = e
-	}
-
-	return r
-}
-
 func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importRule, error) {
 	vrfName := vrfNameOf(network)
 	i := importRule{
@@ -204,7 +183,7 @@ func prefixLists(
 ) []IPPrefixList {
 	afString := "ip"
 	if *af == apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V6 {
-		afString = "ip6"
+		afString = "ipv6"
 	}
 
 	var result []IPPrefixList

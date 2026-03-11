@@ -11,6 +11,7 @@ import (
 	"github.com/metal-stack/os-installer/pkg/network"
 	"github.com/metal-stack/os-installer/pkg/test"
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -70,11 +71,61 @@ var (
 				Asn:                 4200003073,
 				NatType:             apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
 			},
-			// {
-			// 	Network:     "internet-v6",
-			// 	NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
-			// 	Ips:         []string{"2001::4"},
-			// },
+		},
+	}
+
+	firewallAllocationDualStack = &apiv2.MachineAllocation{
+		Hostname:       "firewall",
+		AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL,
+		Project:        "project-a",
+		Networks: []*apiv2.MachineNetwork{
+			{
+				Network:     "379d294d-22e8-4aed-82e1-62c6c2f08d6a",
+				Project:     new("project-a"),
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD,
+				Prefixes:    []string{"2002::/64"},
+				Ips:         []string{"2002::1"},
+				Vrf:         3981,
+				Asn:         4200003073,
+			},
+			{
+				Network:     "partition-storage",
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED,
+				Project:     new("project-b"),
+				Prefixes:    []string{"10.0.18.0/22"},
+				Ips:         []string{"10.0.18.2"},
+				Vrf:         3982,
+				Asn:         4200003073,
+				// FIXME clarify if this is required
+				// NatType:     apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
+			},
+			{
+				Network:             "internet",
+				NetworkType:         apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
+				Ips:                 []string{"2a02:c00:20::1", "185.1.2.3"},
+				Prefixes:            []string{"185.1.2.0/24", "2a02:c00:20::/45"},
+				DestinationPrefixes: []string{"::/0"},
+				Vrf:                 104009,
+				Asn:                 4200003073,
+				NatType:             apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
+			},
+			{
+				Network:     "underlay",
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_UNDERLAY,
+				Asn:         4200003073,
+				Ips:         []string{"10.1.0.1"},
+				Prefixes:    []string{"10.0.12.0/22"},
+			},
+			{
+				Network:             "mpls",
+				NetworkType:         apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
+				Prefixes:            []string{"100.127.129.0/24"},
+				Ips:                 []string{"100.127.129.1"},
+				DestinationPrefixes: []string{"100.127.1.0/24"},
+				Vrf:                 104010,
+				Asn:                 4200003073,
+				NatType:             apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
+			},
 		},
 	}
 
@@ -304,12 +355,12 @@ func TestRender(t *testing.T) {
 			wantFilePath: "frr.conf.firewall",
 			wantErr:      nil,
 		},
-		// {
-		// 	name:         "render firewall, dualstack",
-		// 	allocation:   firewallAllocation,
-		// 	wantFilePath: "frr.conf.firewall_dualstack",
-		// 	wantErr:      nil,
-		// },
+		{
+			name:         "render firewall, dualstack",
+			allocation:   firewallAllocationDualStack,
+			wantFilePath: "frr.conf.firewall_dualstack",
+			wantErr:      nil,
+		},
 		// {
 		// 	name:         "render firewall frr-9",
 		// 	allocation:   firewallFrr9Allocation,
@@ -362,9 +413,7 @@ func TestRender(t *testing.T) {
 			content, err := fs.ReadFile(frrConfigPath)
 			require.NoError(t, err)
 
-			if diff := cmp.Diff(mustReadExpected(tt.wantFilePath), string(content)); diff != "" {
-				t.Errorf("diff (+got -want):\n%s", diff)
-			}
+			assert.Equal(t, mustReadExpected(tt.wantFilePath), string(content))
 		})
 	}
 }
