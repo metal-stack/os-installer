@@ -24,22 +24,18 @@ const (
 
 	frrConfigPath = "/etc/frr/frr.conf"
 
-	// FRRVersion holds a string that is used in the frr.conf to define the FRR version.
-	FRRVersion = "8.5"
-	// TplFirewallFRR defines the name of the template to render FRR configuration to a 'firewall'.
-	TplFirewallFRR = "frr.firewall.tpl"
-	// TplMachineFRR defines the name of the template to render FRR configuration to a 'machine'.
-	TplMachineFRR = "frr.machine.tpl"
-	// IPPrefixListSeqSeed specifies the initial value for prefix lists sequence number.
-	IPPrefixListSeqSeed = 100
-	// IPPrefixListNoExportSuffix defines the suffix to use for private IP ranges that must not be exported.
-	IPPrefixListNoExportSuffix = "-no-export"
-	// RouteMapOrderSeed defines the initial value for route-map order.
-	RouteMapOrderSeed = 10
-	// AddressFamilyIPv4 is the name for this address family for the routing daemon.
-	AddressFamilyIPv4 = "ip"
-	// AddressFamilyIPv6 is the name for this address family for the routing daemon.
-	AddressFamilyIPv6 = "ipv6"
+	// frrVersion holds a string that is used in the frr.conf to define the FRR version.
+	frrVersion = "8.5"
+	// ipPrefixListSeqSeed specifies the initial value for prefix lists sequence number.
+	ipPrefixListSeqSeed = 100
+	// ipPrefixListNoExportSuffix defines the suffix to use for private IP ranges that must not be exported.
+	ipPrefixListNoExportSuffix = "-no-export"
+	// routeMapOrderSeed defines the initial value for route-map order.
+	routeMapOrderSeed = 10
+	// addressFamilyIPv4 is the name for this address family for the routing daemon.
+	addressFamilyIPv4 = "ip"
+	// addressFamilyIPv6 is the name for this address family for the routing daemon.
+	addressFamilyIPv6 = "ipv6"
 )
 
 var (
@@ -128,7 +124,7 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 		}
 		data = MachineFRRData{
 			CommonFRRData: CommonFRRData{
-				FRRVersion: FRRVersion,
+				FRRVersion: frrVersion,
 				Hostname:   cfg.Network.Hostname(),
 				Comment:    comment,
 				ASN:        int64(net.Asn),
@@ -148,7 +144,7 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 
 		data = FirewallFRRData{
 			CommonFRRData: CommonFRRData{
-				FRRVersion: FRRVersion,
+				FRRVersion: frrVersion,
 				Hostname:   cfg.Network.Hostname(),
 				Comment:    comment,
 				ASN:        int64(net.Asn),

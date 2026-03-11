@@ -12,19 +12,19 @@ import (
 )
 
 const (
-	// Permit defines an access policy that allows access.
-	Permit AccessPolicy = "permit"
-	// Deny defines an access policy that forbids access.
-	Deny AccessPolicy = "deny"
+	// permit defines an access policy that allows access.
+	permit accessPolicy = "permit"
+	// deny defines an access policy that forbids access.
+	deny accessPolicy = "deny"
 )
 
-// AccessPolicy is a type that represents a policy to manage access roles.
 type (
-	AccessPolicy string
+	// accessPolicy is a type that represents a policy to manage access roles.
+	accessPolicy string
 
 	importPrefix struct {
 		Prefix    netip.Prefix
-		Policy    AccessPolicy
+		Policy    accessPolicy
 		SourceVRF string
 	}
 
@@ -101,7 +101,7 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 				}
 				i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
 					Prefix:    netip.PrefixFrom(parsed, bl),
-					Policy:    Deny,
+					Policy:    deny,
 					SourceVRF: vrfNameOf(defaultNet),
 				})
 			}
@@ -127,7 +127,7 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 				if !isThere {
 					i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
 						Prefix:    ppfx,
-						Policy:    Permit,
+						Policy:    permit,
 						SourceVRF: vrfNameOf(n),
 					})
 				}
@@ -148,7 +148,7 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 							importExternalNet = true
 							i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
 								Prefix:    netip.MustParsePrefix(pfx),
-								Policy:    Permit,
+								Policy:    permit,
 								SourceVRF: vrfNameOf(e),
 							})
 						}
@@ -183,13 +183,13 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 
 func (i *importRule) prefixLists() []IPPrefixList {
 	var result []IPPrefixList
-	seed := IPPrefixListSeqSeed
+	seed := ipPrefixListSeqSeed
 	afs := []apiv2.NetworkAddressFamily{apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V4, apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V6}
 	for _, af := range afs {
 		pfxList := prefixLists(i.ImportPrefixesNoExport, &af, false, seed, i.TargetVRF)
 		result = append(result, pfxList...)
 
-		seed = IPPrefixListSeqSeed + len(result)
+		seed = ipPrefixListSeqSeed + len(result)
 		result = append(result, prefixLists(i.ImportPrefixes, &af, true, seed, i.TargetVRF)...)
 	}
 
@@ -250,7 +250,7 @@ func stringSliceToIPPrefix(s []string, sourceVrf string) []importPrefix {
 		}
 		result = append(result, importPrefix{
 			Prefix:    ipp,
-			Policy:    Permit,
+			Policy:    permit,
 			SourceVRF: sourceVrf,
 		})
 	}
@@ -306,7 +306,7 @@ func byName(prefixLists []IPPrefixList) map[string]IPPrefixList {
 func (i *importRule) routeMaps() []RouteMap {
 	var result []RouteMap
 
-	order := RouteMapOrderSeed
+	order := routeMapOrderSeed
 	byName := byName(i.prefixLists())
 
 	names := []string{}
@@ -321,24 +321,24 @@ func (i *importRule) routeMaps() []RouteMap {
 		matchVrf := fmt.Sprintf("match source-vrf %s", prefixList.SourceVRF)
 		matchPfxList := fmt.Sprintf("match %s address prefix-list %s", prefixList.AddressFamily, n)
 		entries := []string{matchVrf, matchPfxList}
-		if strings.HasSuffix(n, IPPrefixListNoExportSuffix) {
+		if strings.HasSuffix(n, ipPrefixListNoExportSuffix) {
 			entries = append(entries, "set community additive no-export")
 		}
 
 		routeMap := RouteMap{
 			Name:    routeMapName(i.TargetVRF),
-			Policy:  string(Permit),
+			Policy:  string(permit),
 			Order:   order,
 			Entries: entries,
 		}
-		order += RouteMapOrderSeed
+		order += routeMapOrderSeed
 
 		result = append(result, routeMap)
 	}
 
 	routeMap := RouteMap{
 		Name:   routeMapName(i.TargetVRF),
-		Policy: string(Deny),
+		Policy: string(deny),
 		Order:  order,
 	}
 
@@ -374,7 +374,7 @@ func (i *importPrefix) name(targetVrf string, isExported bool) string {
 		suffix = "-ipv6"
 	}
 	if !isExported {
-		suffix += IPPrefixListNoExportSuffix
+		suffix += ipPrefixListNoExportSuffix
 	}
 
 	return fmt.Sprintf("%s-import-from-%s%s", targetVrf, i.SourceVRF, suffix)
