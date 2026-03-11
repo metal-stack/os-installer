@@ -31,6 +31,4 @@ test:
 
 .PHONY: validate
 validate:
-	cd pkg/network
 	./validate.sh
-	cd -

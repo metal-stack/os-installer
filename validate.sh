@@ -21,7 +21,7 @@ validate () {
         --cap-add=NET_ADMIN \
         --cap-add=NET_RAW \
         --name vali \
-        --volume ./testdata:/testdata \
+        --volume ./pkg:/testdata:ro \
         metal-networker-validate:${tag} /validate_os.sh
 }
 
