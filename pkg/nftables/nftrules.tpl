@@ -40,7 +40,7 @@ table inet metal {
         {{- range .FirewallRules.Ingress }}
         {{ . }}
         {{- end }}
-        {{ if eq .ForwardPolicy "drop" -}}
+        {{- if eq .ForwardPolicy "drop" }}
         limit rate 2/minute counter log prefix "nftables-metal-dropped: "
         {{- end }}
     }

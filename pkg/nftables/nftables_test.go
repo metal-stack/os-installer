@@ -11,6 +11,7 @@ import (
 	"github.com/metal-stack/os-installer/pkg/network"
 	"github.com/metal-stack/os-installer/pkg/test"
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -365,9 +366,7 @@ func TestRender(t *testing.T) {
 			content, err := fs.ReadFile(nftrulesPath)
 			require.NoError(t, err)
 
-			if diff := cmp.Diff(mustReadExpected(tt.wantFilePath), string(content)); diff != "" {
-				t.Errorf("diff (+got -want):\n%s", diff)
-			}
+			assert.Equal(t, mustReadExpected(tt.wantFilePath), string(content))
 		})
 	}
 }
