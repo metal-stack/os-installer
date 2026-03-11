@@ -1,4 +1,5 @@
 # {{ .Comment }}
+# network: {{ .EVPNIface.Network }}
 [NetDev]
 Name=vni{{ .EVPNIface.VrfID }}
 Kind=vxlan

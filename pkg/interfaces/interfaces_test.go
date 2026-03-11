@@ -50,30 +50,36 @@ var (
 		AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL,
 		Networks: []*apiv2.MachineNetwork{
 			{
+				Network:     "379d294d-22e8-4aed-82e1-62c6c2f08d6a",
 				NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD,
 				Ips:         []string{"10.0.16.2"},
 				Vrf:         3981,
 			},
 			{
+				Network:     "partition-storage",
 				NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED,
 				Ips:         []string{"10.0.18.2"},
 				Vrf:         3982,
 			},
 			{
+				Network:     "internet",
 				NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
 				Ips:         []string{"185.1.2.3"},
 				Vrf:         104009,
 			},
 			{
+				Network:     "underlay",
 				NetworkType: apiv2.NetworkType_NETWORK_TYPE_UNDERLAY,
 				Ips:         []string{"10.1.0.1"},
 			},
 			{
+				Network:     "mpls",
 				NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
 				Ips:         []string{"100.127.129.1"},
 				Vrf:         104010,
 			},
 			{
+				Network:     "internet-v6",
 				NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
 				Ips:         []string{"2001::4"},
 			},

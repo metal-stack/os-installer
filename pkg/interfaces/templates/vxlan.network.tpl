@@ -1,4 +1,5 @@
 # {{ .Comment }}
+# network: {{ .EVPNIface.Network }}
 [Match]
 Name=vni{{ .EVPNIface.VrfID }}
 

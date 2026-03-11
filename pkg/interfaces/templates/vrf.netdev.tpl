@@ -1,4 +1,5 @@
 # {{ .Comment }}
+# network: {{ .EVPNIface.Network }}
 [NetDev]
 Name=vrf{{ .EVPNIface.VrfID }}
 Kind=vrf

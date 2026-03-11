@@ -26,9 +26,10 @@ type (
 	}
 
 	EvpnIface struct {
-		CIDRs  []string
-		VlanID int
-		VrfID  uint64
+		Network string
+		CIDRs   []string
+		VlanID  int
+		VrfID   uint64
 	}
 )
 
@@ -210,9 +211,10 @@ func (n *Network) EVPNIfaces() (ifaces []EvpnIface, err error) {
 			}
 
 			ifaces = append(ifaces, EvpnIface{
-				CIDRs:  cidrs,
-				VlanID: vlanOffset + i,
-				VrfID:  nw.Vrf,
+				Network: nw.Network,
+				CIDRs:   cidrs,
+				VlanID:  vlanOffset + i,
+				VrfID:   nw.Vrf,
 			})
 		}
 	}

@@ -1,4 +1,5 @@
 # {{ .Comment }}
+# network: {{ .EVPNIface.Network }}
 [Match]
 Name=vlan{{ .EVPNIface.VrfID }}
 
