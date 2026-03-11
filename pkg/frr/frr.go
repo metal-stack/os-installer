@@ -223,11 +223,18 @@ func assembleVRFs(cfg *Config) ([]VRF, error) {
 		frr    *FRR
 	)
 
-	if cfg.FRRVersion != nil {
-		frr = &FRR{
-			Major: cfg.FRRVersion.Major(),
-			Minor: cfg.FRRVersion.Minor(),
+	if cfg.FRRVersion == nil {
+		frrVersion, err := DetectVersion()
+		if err != nil {
+			return nil, fmt.Errorf("unable to detect frr version: %w", err)
 		}
+
+		cfg.FRRVersion = frrVersion
+	}
+
+	frr = &FRR{
+		Major: cfg.FRRVersion.Major(),
+		Minor: cfg.FRRVersion.Minor(),
 	}
 
 	for _, n := range cfg.Network.AllocationNetworks() {
