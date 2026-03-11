@@ -17,6 +17,7 @@ import (
 	"github.com/metal-stack/metal-go/api/models"
 	v1 "github.com/metal-stack/os-installer/api/v1"
 	"github.com/metal-stack/os-installer/old/network"
+	"github.com/metal-stack/os-installer/pkg/nftables"
 	"github.com/metal-stack/os-installer/pkg/services/chrony"
 	"github.com/metal-stack/v"
 	"github.com/spf13/afero"
@@ -486,7 +487,7 @@ func (i *installer) configureNetwork() error {
 	if err != nil {
 		return err
 	}
-	c.Configure(network.ForwardPolicyDrop)
+	c.Configure(nftables.ForwardPolicyDrop)
 	return nil
 }
 
