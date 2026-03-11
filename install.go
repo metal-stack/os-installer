@@ -16,7 +16,7 @@ import (
 	ignitionConfig "github.com/flatcar/ignition/config/v2_4"
 	"github.com/metal-stack/metal-go/api/models"
 	v1 "github.com/metal-stack/os-installer/api/v1"
-	"github.com/metal-stack/os-installer/old/network"
+	"github.com/metal-stack/os-installer/pkg/network"
 	"github.com/metal-stack/os-installer/pkg/nftables"
 	"github.com/metal-stack/os-installer/pkg/services/chrony"
 	"github.com/metal-stack/v"
