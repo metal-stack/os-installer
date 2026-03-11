@@ -126,6 +126,20 @@ func (n *Network) PrivatePrimaryNetwork() (*apiv2.MachineNetwork, error) {
 	return nil, fmt.Errorf("no private primary network present in network allocation")
 }
 
+func (n *Network) PrivateSecondarySharedNetworks() (nws []*apiv2.MachineNetwork) {
+	for _, nw := range n.allocation.Networks {
+		if nw.Project == nil {
+			continue
+		}
+
+		if nw.NetworkType == apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED && *nw.Project != n.allocation.Project {
+			nws = append(nws, nw)
+		}
+	}
+
+	return
+}
+
 func (n *Network) PrivatePrimaryIPs() ([]string, error) {
 	if n.allocation.AllocationType == apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL {
 		for _, nw := range n.allocation.Networks {
@@ -234,6 +248,18 @@ func (n *Network) GetNetworks(networkType apiv2.NetworkType) []*apiv2.MachineNet
 		}
 	}
 	return networks
+}
+
+func (n *Network) GetExternalNetworkVrfNames() (vrfNames []string) {
+	for _, nw := range n.allocation.Networks {
+		if nw.NetworkType != apiv2.NetworkType_NETWORK_TYPE_EXTERNAL {
+			continue
+		}
+
+		vrfNames = append(vrfNames, fmt.Sprintf("vrf%d", nw.Vrf))
+	}
+
+	return
 }
 
 func (n *Network) GetDefaultRouteNetwork() (*apiv2.MachineNetwork, error) {
