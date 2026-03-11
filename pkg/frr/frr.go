@@ -92,7 +92,7 @@ type (
 	IPPrefixList struct {
 		Name          string
 		Spec          string
-		AddressFamily *apiv2.NetworkAddressFamily
+		AddressFamily string
 		// SourceVRF specifies from which VRF the given prefix list should be imported
 		SourceVRF string
 	}
@@ -160,6 +160,13 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 		TemplateString: template,
 		Data:           data,
 		Fs:             cfg.fs,
+		Validate: func(path string) error {
+			if !cfg.Validate {
+				return nil
+			}
+
+			return validate(frrConfigPath)
+		},
 	})
 	if err != nil {
 		return false, err
@@ -168,12 +175,6 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 	changed, err = r.Render(ctx, frrConfigPath)
 	if err != nil {
 		return changed, err
-	}
-
-	if cfg.Validate {
-		if err := validate(frrConfigPath); err != nil {
-			return changed, err
-		}
 	}
 
 	if cfg.Reload && changed {
@@ -237,6 +238,7 @@ func assembleVRFs(cfg *Config) ([]VRF, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		vrf := VRF{
 			ID:             n.Vrf,
 			VNI:            n.Vrf,

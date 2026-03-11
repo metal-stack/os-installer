@@ -1,7 +1,6 @@
-{{- /*gotype: github.com/metal-stack/os-installer/pkg/network.FirewallFRRData*/ -}}
 {{- $ASN := .ASN -}}
 {{- $RouterId := .RouterID -}}
-{{ .Comment }}
+# {{ .Comment }}
 frr version {{ .FRRVersion }}
 frr defaults datacenter
 hostname {{ .Hostname }}

@@ -7,24 +7,23 @@ import (
 	"strings"
 
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
-	mn "github.com/metal-stack/metal-lib/pkg/net"
 	nwutil "github.com/metal-stack/os-installer/pkg/network"
 )
 
 const (
-	// permit defines an access policy that allows access.
-	permit accessPolicy = "permit"
-	// deny defines an access policy that forbids access.
-	deny accessPolicy = "deny"
+	// Permit defines an access policy that allows access.
+	Permit AccessPolicy = "permit"
+	// Deny defines an access policy that forbids access.
+	Deny AccessPolicy = "deny"
 )
 
+// AccessPolicy is a type that represents a policy to manage access roles.
 type (
-	// accessPolicy is a type that represents a policy to manage access roles.
-	accessPolicy string
+	AccessPolicy string
 
 	importPrefix struct {
 		Prefix    netip.Prefix
-		Policy    accessPolicy
+		Policy    AccessPolicy
 		SourceVRF string
 	}
 
@@ -63,10 +62,6 @@ func (i *importRule) bySourceVrf() map[string]ImportSettings {
 }
 
 func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importRule, error) {
-	if network.NetworkType == apiv2.NetworkType_NETWORK_TYPE_UNDERLAY {
-		return nil, nil
-	}
-
 	vrfName := vrfNameOf(network)
 	i := importRule{
 		TargetVRF: vrfName,
@@ -77,13 +72,9 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 	}
 
 	externalNets := cfg.Network.GetNetworks(apiv2.NetworkType_NETWORK_TYPE_EXTERNAL)
-	privateSecondarySharedNets := cfg.Network.GetNetworks(mn.PrivateSecondaryShared)
+	privateSecondarySharedNets := cfg.Network.PrivateSecondarySharedNetworks()
 
-	switch network.NetworkType {
-	case mn.PrivatePrimaryUnshared:
-		fallthrough
-	// case mn.PrivatePrimaryShared:
-	case apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED:
+	if network.Network == privatePrimaryNet.Network {
 		// reach out from private network into public networks
 		i.ImportVRFs = vrfNamesOf(externalNets)
 		i.ImportPrefixes = getDestinationPrefixes(externalNets)
@@ -101,7 +92,7 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 				}
 				i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
 					Prefix:    netip.PrefixFrom(parsed, bl),
-					Policy:    deny,
+					Policy:    Deny,
 					SourceVRF: vrfNameOf(defaultNet),
 				})
 			}
@@ -127,13 +118,18 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 				if !isThere {
 					i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
 						Prefix:    ppfx,
-						Policy:    permit,
+						Policy:    Permit,
 						SourceVRF: vrfNameOf(n),
 					})
 				}
 			}
 		}
-	case mn.PrivateSecondaryShared:
+
+		return &i, nil
+	}
+
+	switch network.NetworkType {
+	case apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED:
 		// reach out from private shared networks into private primary network
 		i.ImportVRFs = []string{vrfNameOf(privatePrimaryNet)}
 		i.ImportPrefixes = concatPfxSlices(prefixesOfNetwork(privatePrimaryNet, vrfNameOf(privatePrimaryNet)), prefixesOfNetwork(network, vrfNameOf(privatePrimaryNet)))
@@ -148,7 +144,7 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 							importExternalNet = true
 							i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
 								Prefix:    netip.MustParsePrefix(pfx),
-								Policy:    permit,
+								Policy:    Permit,
 								SourceVRF: vrfNameOf(e),
 							})
 						}
@@ -182,9 +178,12 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 }
 
 func (i *importRule) prefixLists() []IPPrefixList {
-	var result []IPPrefixList
-	seed := ipPrefixListSeqSeed
-	afs := []apiv2.NetworkAddressFamily{apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V4, apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V6}
+	var (
+		result []IPPrefixList
+		seed   = ipPrefixListSeqSeed
+		afs    = []apiv2.NetworkAddressFamily{apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V4, apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V6}
+	)
+
 	for _, af := range afs {
 		pfxList := prefixLists(i.ImportPrefixesNoExport, &af, false, seed, i.TargetVRF)
 		result = append(result, pfxList...)
@@ -203,7 +202,13 @@ func prefixLists(
 	seed int,
 	vrf string,
 ) []IPPrefixList {
+	afString := "ip"
+	if *af == apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V6 {
+		afString = "ip6"
+	}
+
 	var result []IPPrefixList
+
 	for _, p := range prefixes {
 		if *af == apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V4 && !p.Prefix.Addr().Is4() {
 			continue
@@ -220,12 +225,14 @@ func prefixLists(
 				continue
 			}
 			name := p.name(vrf, isExported)
+
 			prefixList := IPPrefixList{
 				Name:          name,
 				Spec:          spec,
-				AddressFamily: af,
+				AddressFamily: afString,
 				SourceVRF:     p.SourceVRF,
 			}
+
 			result = append(result, prefixList)
 		}
 		seed++
@@ -250,7 +257,7 @@ func stringSliceToIPPrefix(s []string, sourceVrf string) []importPrefix {
 		}
 		result = append(result, importPrefix{
 			Prefix:    ipp,
-			Policy:    permit,
+			Policy:    Permit,
 			SourceVRF: sourceVrf,
 		})
 	}
@@ -327,7 +334,7 @@ func (i *importRule) routeMaps() []RouteMap {
 
 		routeMap := RouteMap{
 			Name:    routeMapName(i.TargetVRF),
-			Policy:  string(permit),
+			Policy:  string(Permit),
 			Order:   order,
 			Entries: entries,
 		}
@@ -338,7 +345,7 @@ func (i *importRule) routeMaps() []RouteMap {
 
 	routeMap := RouteMap{
 		Name:   routeMapName(i.TargetVRF),
-		Policy: string(deny),
+		Policy: string(Deny),
 		Order:  order,
 	}
 
