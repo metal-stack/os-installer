@@ -54,24 +54,14 @@ type (
 		fs afero.Fs
 	}
 
-	// commonFRRData contains attributes that are common to FRR configuration of all kind of bare metal servers.
-	commonFRRData struct {
+	// frrData contains attributes to hold FRR configuration of all kind of bare metal servers.
+	frrData struct {
 		ASN        int64
 		Comment    string
 		FRRVersion string
 		Hostname   string
 		RouterID   string
-	}
-
-	// machineFRRData contains attributes required to render frr.conf of bare metal servers that function as 'machine'.
-	machineFRRData struct {
-		commonFRRData
-	}
-
-	// firewallFRRData contains attributes required to render frr.conf of bare metal servers that function as 'firewall'.
-	firewallFRRData struct {
-		commonFRRData
-		VRFs []vrf
+		VRFs       []vrf
 	}
 
 	// vrf represents data required to render vrf information into frr.conf.
@@ -120,14 +110,12 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 		if err != nil {
 			return false, err
 		}
-		data = machineFRRData{
-			commonFRRData: commonFRRData{
-				FRRVersion: defaultFrrVersion,
-				Hostname:   cfg.Network.Hostname(),
-				Comment:    comment,
-				ASN:        int64(net.Asn),
-				RouterID:   routerID(net),
-			},
+		data = frrData{
+			FRRVersion: defaultFrrVersion,
+			Hostname:   cfg.Network.Hostname(),
+			Comment:    comment,
+			ASN:        int64(net.Asn),
+			RouterID:   routerID(net),
 		}
 		template = machineTemplateString
 	} else {
@@ -140,15 +128,13 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 			return false, err
 		}
 
-		data = firewallFRRData{
-			commonFRRData: commonFRRData{
-				FRRVersion: defaultFrrVersion,
-				Hostname:   cfg.Network.Hostname(),
-				Comment:    comment,
-				ASN:        int64(net.Asn),
-				RouterID:   routerID(net),
-			},
-			VRFs: vrfs,
+		data = frrData{
+			FRRVersion: defaultFrrVersion,
+			Hostname:   cfg.Network.Hostname(),
+			Comment:    comment,
+			ASN:        int64(net.Asn),
+			RouterID:   routerID(net),
+			VRFs:       vrfs,
 		}
 		template = firewallTemplateString
 	}
