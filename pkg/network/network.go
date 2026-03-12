@@ -14,10 +14,10 @@ const (
 	// mtuMachine defines the value for MTU specific to the needs of a machine.
 	mtuMachine = 9000
 
-	// IPv4ZeroCIDR is the CIDR block for the whole IPv4 address space
-	IPv4ZeroCIDR = "0.0.0.0/0"
-	// IPv6ZeroCIDR is the CIDR block for the whole IPv6 address space
-	IPv6ZeroCIDR = "::/0"
+	// ipv4ZeroCIDR is the CIDR block for the whole IPv4 address space
+	ipv4ZeroCIDR = "0.0.0.0/0"
+	// ipv6ZeroCIDR is the CIDR block for the whole IPv6 address space
+	ipv6ZeroCIDR = "::/0"
 )
 
 type (
@@ -305,7 +305,7 @@ func (n *Network) GetTenantNetworkVrfName() (string, error) {
 
 func ContainsDefaultRoute(prefixes []string) bool {
 	for _, prefix := range prefixes {
-		if prefix == IPv4ZeroCIDR || prefix == IPv6ZeroCIDR {
+		if prefix == ipv4ZeroCIDR || prefix == ipv6ZeroCIDR {
 			return true
 		}
 	}
