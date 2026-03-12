@@ -18,7 +18,7 @@ import (
 
 type installer struct {
 	log  *slog.Logger
-	cfg  *v1.InstallerConfig
+	cfg  *v1.Config
 	oss  oscommon.OperatingSystem
 	fs   *afero.Afero
 	exec *exec.CmdExecutor
@@ -32,7 +32,7 @@ func Install(ctx context.Context, log *slog.Logger, details *v1.MachineDetails, 
 		fs    = &afero.Afero{
 			Fs: afero.OsFs{},
 		}
-		installerConfig = &v1.InstallerConfig{}
+		installerConfig = &v1.Config{}
 	)
 
 	if oscommon.FileExists(fs, v1.InstallerConfigPath) {

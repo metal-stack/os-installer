@@ -4,6 +4,12 @@ import (
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 )
 
+const (
+	MachineDetailsPath    = "/etc/metal/machine-details.yaml"
+	MachineAllocationPath = "/etc/metal/machine-allocation.yaml"
+	InstallerConfigPath   = "/etc/metal/os-installer.yaml"
+)
+
 // Bootinfo is written by the installer in the target os to tell us
 // which kernel, initrd and cmdline must be used for kexec
 type Bootinfo struct {
@@ -13,10 +19,8 @@ type Bootinfo struct {
 	BootloaderID string `yaml:"bootloader_id"`
 }
 
-const InstallerConfigPath = "/etc/metal/os-installer.yaml"
-
-// InstallerConfig can be placed inside the target OS to customize the os-installer.
-type InstallerConfig struct {
+// Config can be placed inside the target OS to customize the os-installer.
+type Config struct {
 	// OsName enforces a specific os-installer implementation, defaults to auto-detection
 	OsName *string `yaml:"os_name"`
 	// Only allows to run installer tasks only with the given names
