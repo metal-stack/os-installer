@@ -13,8 +13,8 @@ import (
 	"github.com/metal-stack/os-installer/pkg/test"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/assert/yaml"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 )
 
 func Test_os_WriteBootInfo(t *testing.T) {

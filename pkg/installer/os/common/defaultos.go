@@ -5,13 +5,23 @@ import "context"
 type (
 	defaultOS struct {
 		*CommonTasks
+		bootloaderID *string
 	}
 )
 
 func NewDefaultOS(cfg *Config) *defaultOS {
 	return &defaultOS{
-		CommonTasks: New(cfg),
+		CommonTasks:  New(cfg),
+		bootloaderID: cfg.BootloaderID,
 	}
+}
+
+func (o *defaultOS) BootloaderID() string {
+	if o.bootloaderID == nil {
+		panic("no bootloader id provided for default os")
+	}
+
+	return *o.bootloaderID
 }
 
 func (o *defaultOS) WriteBootInfo(ctx context.Context, cmdLine string) error {

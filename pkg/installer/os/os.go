@@ -16,6 +16,8 @@ const (
 	ubuntuOS    = osName("ubuntu")
 	debianOS    = osName("debian")
 	almalinuxOS = osName("almalinux")
+	// defaultOS contains no specific overwrites and can be used by out-of-tree images
+	defaultOS = osName("default")
 )
 
 type (
@@ -33,10 +35,18 @@ func New(cfg *oscommon.Config) (oscommon.OperatingSystem, error) {
 		return fromOsName(*cfg.Name, cfg)
 	}
 
-	return detectOS(cfg)
+	os, err := detectOS(cfg)
+	if err != nil {
+		cfg.Log.Error("unable to detect operating system, falling back to default implementation", "error", err)
+		return fromOsName(string(defaultOS), cfg)
+	}
+
+	return os, nil
 }
 
 func detectOS(cfg *oscommon.Config) (oscommon.OperatingSystem, error) {
+	cfg.Log.Info("automatically detecting operating system for installation")
+
 	content, err := cfg.Fs.ReadFile("/etc/os-release")
 	if err != nil {
 		return nil, err

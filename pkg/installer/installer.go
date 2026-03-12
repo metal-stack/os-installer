@@ -13,7 +13,7 @@ import (
 	operatingsystem "github.com/metal-stack/os-installer/pkg/installer/os"
 	oscommon "github.com/metal-stack/os-installer/pkg/installer/os/common"
 	"github.com/spf13/afero"
-	"github.com/stretchr/testify/assert/yaml"
+	"go.yaml.in/yaml/v3"
 )
 
 type installer struct {

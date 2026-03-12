@@ -58,20 +58,17 @@ type (
 		allocation *apiv2.MachineAllocation
 		exec       *exec.CmdExecutor
 		network    *network.Network
-
-		bootloaderID *string
 	}
 )
 
 func New(cfg *Config) *CommonTasks {
 	return &CommonTasks{
-		log:          cfg.Log,
-		fs:           cfg.Fs,
-		details:      cfg.MachineDetails,
-		allocation:   cfg.Allocation,
-		exec:         cfg.Exec,
-		network:      network.New(cfg.Allocation),
-		bootloaderID: cfg.BootloaderID,
+		log:        cfg.Log,
+		fs:         cfg.Fs,
+		details:    cfg.MachineDetails,
+		allocation: cfg.Allocation,
+		exec:       cfg.Exec,
+		network:    network.New(cfg.Allocation),
 	}
 }
 
@@ -80,11 +77,7 @@ func (d *CommonTasks) SudoGroup() string {
 }
 
 func (d *CommonTasks) BootloaderID() string {
-	if d.bootloaderID == nil {
-		panic("no bootloader id provided for default os")
-	}
-
-	return *d.bootloaderID
+	panic("common tasks do not provide a bootloader id")
 }
 
 func (d *CommonTasks) InitramdiskFormatString() string {

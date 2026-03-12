@@ -37,16 +37,6 @@ func (o *os) GrubInstall(ctx context.Context, cmdLine string) error {
 		return err
 	}
 
-	grubInstallArgs := []string{
-		"--target=x86_64-efi",
-		"--efi-directory=/boot/efi",
-		"--boot-directory=/boot",
-		"--bootloader-id=" + o.BootloaderID(),
-	}
-	if o.details.RaidEnabled {
-		grubInstallArgs = append(grubInstallArgs, "--no-nvram")
-	}
-
 	_, err = o.exec.Execute(ctx, &exec.Params{
 		Name: "grub2-mkconfig",
 		Args: []string{"-o", grubConfigPath},
@@ -54,8 +44,6 @@ func (o *os) GrubInstall(ctx context.Context, cmdLine string) error {
 	if err != nil {
 		return err
 	}
-
-	grubInstallArgs = append(grubInstallArgs, fmt.Sprintf("UUID=%s", o.details.RootUUID))
 
 	if o.details.RaidEnabled {
 		out, err := o.exec.Execute(ctx, &exec.Params{
