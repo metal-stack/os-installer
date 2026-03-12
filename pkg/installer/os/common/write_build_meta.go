@@ -14,7 +14,7 @@ const (
 	BuildMetaPath = "/etc/metal/build-meta.yaml"
 )
 
-func (d *DefaultOS) WriteBuildMeta(ctx context.Context) error {
+func (d *CommonTasks) WriteBuildMeta(ctx context.Context) error {
 	d.log.Info("writing build meta file", "path", BuildMetaPath)
 
 	meta := &v1.BuildMeta{

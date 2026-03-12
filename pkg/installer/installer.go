@@ -4,20 +4,24 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
+	"slices"
 	"time"
 
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	v1 "github.com/metal-stack/os-installer/api/v1"
+	"github.com/metal-stack/os-installer/pkg/exec"
 	operatingsystem "github.com/metal-stack/os-installer/pkg/installer/os"
 	oscommon "github.com/metal-stack/os-installer/pkg/installer/os/common"
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert/yaml"
 )
 
 type installer struct {
-	log *slog.Logger
-	oss oscommon.OperatingSystem
-	fs  *afero.Afero
+	log  *slog.Logger
+	cfg  *v1.InstallerConfig
+	oss  oscommon.OperatingSystem
+	fs   *afero.Afero
+	exec *exec.CmdExecutor
 }
 
 func Install(ctx context.Context, log *slog.Logger, details *v1.MachineDetails, allocation *apiv2.MachineAllocation) error {
@@ -28,22 +32,38 @@ func Install(ctx context.Context, log *slog.Logger, details *v1.MachineDetails, 
 		fs    = &afero.Afero{
 			Fs: afero.OsFs{},
 		}
+		installerConfig = &v1.InstallerConfig{}
 	)
+
+	if oscommon.FileExists(fs, v1.InstallerConfigPath) {
+		data, err := fs.ReadFile(v1.InstallerConfigPath)
+		if err != nil {
+			return fmt.Errorf("unable to read installer config: %w", err)
+		}
+
+		if err = yaml.Unmarshal(data, &installerConfig); err != nil {
+			return fmt.Errorf("unable to parse installer config: %w", err)
+		}
+	}
 
 	oss, err := operatingsystem.New(&oscommon.Config{
 		Log:            log,
 		Fs:             fs,
 		MachineDetails: details,
 		Allocation:     allocation,
+		Name:           installerConfig.OsName,
+		BootloaderID:   installerConfig.Overwrites.BootloaderID,
 	})
 	if err != nil {
 		return fmt.Errorf("os detection failed: %w", err)
 	}
 
 	i := installer{
-		log: log,
-		oss: oss,
-		fs:  fs,
+		log:  log,
+		cfg:  installerConfig,
+		oss:  oss,
+		exec: exec.New(log),
+		fs:   fs,
 	}
 
 	if err = i.run(ctx); err != nil {
@@ -142,11 +162,25 @@ func (i *installer) run(ctx context.Context) error {
 			name: "write /etc/metal/build-meta.yaml",
 			fn:   i.oss.WriteBuildMeta,
 		},
+		{
+			name: "execute custom executable",
+			fn:   i.customExecutable,
+		},
 	} {
 		var (
 			log   = i.log.With("task-name", task.name)
 			start = time.Now()
 		)
+
+		if len(i.cfg.Only) > 0 && !slices.Contains(i.cfg.Only, task.name) {
+			log.Info("skipping task as defined by installer configuration")
+			continue
+		}
+
+		if slices.Contains(i.cfg.Except, task.name) {
+			log.Info("skipping task as defined by installer configuration")
+			continue
+		}
 
 		log.Info("running install task", "start-at", start.String())
 
@@ -160,7 +194,7 @@ func (i *installer) run(ctx context.Context) error {
 }
 
 func (i *installer) validateRunningInEfiMode(ctx context.Context) error {
-	if !i.isVirtual() && !i.fileExists("/sys/firmware/efi") {
+	if !i.isVirtual() && !oscommon.FileExists(i.fs, "/sys/firmware/efi") {
 		return fmt.Errorf("not running efi mode")
 	}
 
@@ -169,7 +203,7 @@ func (i *installer) validateRunningInEfiMode(ctx context.Context) error {
 
 func (i *installer) removeDockerEnv(_ context.Context) error {
 	// systemd-detect-virt guesses docker which modifies the behavior of many services.
-	if !i.fileExists("/.dockerenv") {
+	if !oscommon.FileExists(i.fs, "/.dockerenv") {
 		return nil
 	}
 
@@ -177,14 +211,22 @@ func (i *installer) removeDockerEnv(_ context.Context) error {
 }
 
 func (i *installer) isVirtual() bool {
-	return !i.fileExists("/sys/class/dmi")
+	return !oscommon.FileExists(i.fs, "/sys/class/dmi")
 }
 
-func (i *installer) fileExists(filename string) bool {
-	info, err := i.fs.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
+func (i *installer) customExecutable(ctx context.Context) error {
+	if i.cfg.CustomScript == nil {
+		i.log.Info("no custom executable to execute, skipping")
+		return nil
 	}
 
-	return !info.IsDir()
+	_, err := i.exec.Execute(ctx, &exec.Params{
+		Name: i.cfg.CustomScript.ExecutablePath,
+		Dir:  i.cfg.CustomScript.WorkDir,
+	})
+	if err != nil {
+		return fmt.Errorf("custom executable returned an error code: %w", err)
+	}
+
+	return nil
 }

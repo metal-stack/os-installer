@@ -13,7 +13,7 @@ const (
 	metalUser = "metal"
 )
 
-func (d *DefaultOS) CreateMetalUser(ctx context.Context, sudoGroup string) error {
+func (d *CommonTasks) CreateMetalUser(ctx context.Context, sudoGroup string) error {
 	u, err := user.Lookup(metalUser)
 	if err != nil {
 		if err.Error() != user.UnknownUserError(metalUser).Error() {

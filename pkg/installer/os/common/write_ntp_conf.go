@@ -14,7 +14,7 @@ const (
 	ChronyConfigPath    = "/etc/chrony/chrony.conf"
 )
 
-func (d *DefaultOS) WriteNTPConf(ctx context.Context) error {
+func (d *CommonTasks) WriteNTPConf(ctx context.Context) error {
 	if len(d.allocation.NtpServer) == 0 {
 		return nil
 	}
@@ -51,7 +51,7 @@ func (d *DefaultOS) WriteNTPConf(ctx context.Context) error {
 	return d.WriteNtpConfToPath(TimesyncdConfigPath, ntpServers)
 }
 
-func (d *DefaultOS) WriteNtpConfToPath(configPath string, ntpServers []string) error {
+func (d *CommonTasks) WriteNtpConfToPath(configPath string, ntpServers []string) error {
 	content := fmt.Sprintf("[Time]\nNTP=%s\n", strings.Join(ntpServers, " "))
 
 	err := d.fs.Remove(configPath)

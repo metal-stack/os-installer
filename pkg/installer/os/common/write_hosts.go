@@ -13,7 +13,7 @@ const (
 `
 )
 
-func (d *DefaultOS) WriteHosts(ctx context.Context) error {
+func (d *CommonTasks) WriteHosts(ctx context.Context) error {
 	ips, err := d.network.PrivatePrimaryIPs()
 	if err != nil {
 		return err

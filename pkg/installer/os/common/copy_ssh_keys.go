@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func (d *DefaultOS) CopySSHKeys(ctx context.Context) error {
+func (d *CommonTasks) CopySSHKeys(ctx context.Context) error {
 	var (
 		sshPath               = path.Join("/home", metalUser, ".ssh")
 		sshAuthorizedKeysPath = path.Join(sshPath, "authorized_keys")

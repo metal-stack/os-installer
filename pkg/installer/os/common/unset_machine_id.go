@@ -7,7 +7,7 @@ const (
 	DbusMachineID = "/var/lib/dbus/machine-id"
 )
 
-func (d *DefaultOS) UnsetMachineID(ctx context.Context) error {
+func (d *CommonTasks) UnsetMachineID(ctx context.Context) error {
 	for _, filePath := range []string{EtcMachineID, DbusMachineID} {
 		if !d.fileExists(filePath) {
 			continue

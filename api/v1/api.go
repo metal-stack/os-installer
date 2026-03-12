@@ -13,6 +13,27 @@ type Bootinfo struct {
 	BootloaderID string `yaml:"bootloader_id"`
 }
 
+const InstallerConfigPath = "/etc/metal/os-installer.yaml"
+
+// InstallerConfig can be placed inside the target OS to customize the os-installer.
+type InstallerConfig struct {
+	// OsName enforces a specific os-installer implementation, defaults to auto-detection
+	OsName *string `yaml:"os_name"`
+	// Only allows to run installer tasks only with the given names
+	Only []string `yaml:"only"`
+	// Except allows to run installer tasks except for the given names
+	Except []string `yaml:"except"`
+	// CustomScript allows executing a custom script that's placed inside the OS at the end of the installer execution
+	CustomScript *struct {
+		ExecutablePath string `yaml:"executable_path"`
+		WorkDir        string `yaml:"workdir"`
+	} `yaml:"custom_script"`
+	// Overwrites allows specifying os-installer overwrites for the default implementation
+	Overwrites struct {
+		BootloaderID *string `yaml:"bootloader_id"`
+	}
+}
+
 type MachineDetails struct {
 	// Id is the machine UUID
 	ID string `yaml:"id"`

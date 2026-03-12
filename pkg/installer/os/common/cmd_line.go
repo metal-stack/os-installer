@@ -9,7 +9,7 @@ import (
 	"github.com/metal-stack/os-installer/pkg/exec"
 )
 
-func (d *DefaultOS) BuildCMDLine(ctx context.Context) (string, error) {
+func (d *CommonTasks) BuildCMDLine(ctx context.Context) (string, error) {
 	parts := []string{
 		fmt.Sprintf("console=%s", d.details.Console),
 		fmt.Sprintf("root=UUID=%s", d.details.RootUUID),
@@ -37,7 +37,7 @@ func (d *DefaultOS) BuildCMDLine(ctx context.Context) (string, error) {
 	return strings.Join(parts, " "), nil
 }
 
-func (d *DefaultOS) findMDUUID(ctx context.Context) (mdUUID string, found bool, err error) {
+func (d *CommonTasks) findMDUUID(ctx context.Context) (mdUUID string, found bool, err error) {
 	d.log.Info("detect software raid uuid")
 
 	if !d.details.RaidEnabled {

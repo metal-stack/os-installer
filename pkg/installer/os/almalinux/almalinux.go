@@ -14,7 +14,7 @@ import (
 
 type (
 	os struct {
-		*oscommon.DefaultOS
+		*oscommon.CommonTasks
 		log        *slog.Logger
 		details    *v1.MachineDetails
 		allocation *apiv2.MachineAllocation
@@ -26,13 +26,13 @@ type (
 
 func New(cfg *oscommon.Config) *os {
 	return &os{
-		DefaultOS:  oscommon.New(cfg),
-		log:        cfg.Log,
-		details:    cfg.MachineDetails,
-		allocation: cfg.Allocation,
-		exec:       cfg.Exec,
-		network:    network.New(cfg.Allocation),
-		fs:         cfg.Fs,
+		CommonTasks: oscommon.New(cfg),
+		log:         cfg.Log,
+		details:     cfg.MachineDetails,
+		allocation:  cfg.Allocation,
+		exec:        cfg.Exec,
+		network:     network.New(cfg.Allocation),
+		fs:          cfg.Fs,
 	}
 }
 
@@ -49,5 +49,5 @@ func (o *os) InitramdiskFormatString() string {
 }
 
 func (o *os) WriteBootInfo(ctx context.Context, cmdLine string) error {
-	return o.DefaultOS.WriteBootInfo(ctx, o.InitramdiskFormatString(), o.BootloaderID(), cmdLine)
+	return o.CommonTasks.WriteBootInfo(ctx, o.InitramdiskFormatString(), o.BootloaderID(), cmdLine)
 }
