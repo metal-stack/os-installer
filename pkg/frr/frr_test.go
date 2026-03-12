@@ -375,12 +375,14 @@ func TestRender(t *testing.T) {
 		{
 			name:         "render firewall",
 			allocation:   firewallAllocation,
+			frrVersion:   semver.MustParse("9.0.1"),
 			wantFilePath: "frr.conf.firewall",
 			wantErr:      nil,
 		},
 		{
 			name:         "render firewall, dualstack",
 			allocation:   firewallAllocationDualStack,
+			frrVersion:   semver.MustParse("9.0.1"),
 			wantFilePath: "frr.conf.firewall_dualstack",
 			wantErr:      nil,
 		},
@@ -401,18 +403,21 @@ func TestRender(t *testing.T) {
 		{
 			name:         "render firewall shared",
 			allocation:   firewallSharedAllocation,
+			frrVersion:   semver.MustParse("9.0.1"),
 			wantFilePath: "frr.conf.firewall_shared",
 			wantErr:      nil,
 		},
 		{
 			name:         "render firewall ipv6",
 			allocation:   firewallIPv6Allocation,
+			frrVersion:   semver.MustParse("9.0.1"),
 			wantFilePath: "frr.conf.firewall_ipv6",
 			wantErr:      nil,
 		},
 		{
 			name:         "render machine",
 			allocation:   machineAllocation,
+			frrVersion:   semver.MustParse("9.0.1"),
 			wantFilePath: "frr.conf.machine",
 			wantErr:      nil,
 		},
