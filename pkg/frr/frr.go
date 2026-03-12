@@ -24,8 +24,8 @@ const (
 
 	frrConfigPath = "/etc/frr/frr.conf"
 
-	// frrVersion holds a string that is used in the frr.conf to define the FRR version.
-	frrVersion = "8.5"
+	// defaultFrrVersion holds a string that is used in the frr.conf to define the FRR version.
+	defaultFrrVersion = "8.5"
 	// ipPrefixListSeqSeed specifies the initial value for prefix lists sequence number.
 	ipPrefixListSeqSeed = 100
 	// ipPrefixListNoExportSuffix defines the suffix to use for private IP ranges that must not be exported.
@@ -54,8 +54,8 @@ type (
 		fs afero.Fs
 	}
 
-	// CommonFRRData contains attributes that are common to FRR configuration of all kind of bare metal servers.
-	CommonFRRData struct {
+	// commonFRRData contains attributes that are common to FRR configuration of all kind of bare metal servers.
+	commonFRRData struct {
 		ASN        int64
 		Comment    string
 		FRRVersion string
@@ -63,46 +63,46 @@ type (
 		RouterID   string
 	}
 
-	// MachineFRRData contains attributes required to render frr.conf of bare metal servers that function as 'machine'.
-	MachineFRRData struct {
-		CommonFRRData
+	// machineFRRData contains attributes required to render frr.conf of bare metal servers that function as 'machine'.
+	machineFRRData struct {
+		commonFRRData
 	}
 
-	// FirewallFRRData contains attributes required to render frr.conf of bare metal servers that function as 'firewall'.
-	FirewallFRRData struct {
-		CommonFRRData
-		VRFs []VRF
+	// firewallFRRData contains attributes required to render frr.conf of bare metal servers that function as 'firewall'.
+	firewallFRRData struct {
+		commonFRRData
+		VRFs []vrf
 	}
 
-	// VRF represents data required to render VRF information into frr.conf.
-	VRF struct {
+	// vrf represents data required to render vrf information into frr.conf.
+	vrf struct {
 		Comment        string
 		ID             uint64
 		Table          uint64
 		VNI            uint64
 		ImportVRFNames []string
-		IPPrefixLists  []IPPrefixList
-		RouteMaps      []RouteMap
-		FRRVersion     *FRR
+		IPPrefixLists  []ipPrefixList
+		RouteMaps      []routeMap
+		FRRVersion     *frrVersion
 	}
 
-	// IPPrefixList represents 'ip prefix-list' filtering mechanism to be used in combination with route-maps.
-	IPPrefixList struct {
+	// ipPrefixList represents 'ip prefix-list' filtering mechanism to be used in combination with route-maps.
+	ipPrefixList struct {
 		Name          string
 		Spec          string
 		AddressFamily string
 		// SourceVRF specifies from which VRF the given prefix list should be imported
 		SourceVRF string
 	}
-	// RouteMap represents a route-map to permit or deny routes.
-	RouteMap struct {
+	// routeMap represents a route-map to permit or deny routes.
+	routeMap struct {
 		Name    string
 		Entries []string
 		Policy  string
 		Order   int
 	}
 
-	FRR struct {
+	frrVersion struct {
 		Major uint64
 		Minor uint64
 	}
@@ -120,9 +120,9 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 		if err != nil {
 			return false, err
 		}
-		data = MachineFRRData{
-			CommonFRRData: CommonFRRData{
-				FRRVersion: frrVersion,
+		data = machineFRRData{
+			commonFRRData: commonFRRData{
+				FRRVersion: defaultFrrVersion,
 				Hostname:   cfg.Network.Hostname(),
 				Comment:    comment,
 				ASN:        int64(net.Asn),
@@ -140,9 +140,9 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 			return false, err
 		}
 
-		data = FirewallFRRData{
-			CommonFRRData: CommonFRRData{
-				FRRVersion: frrVersion,
+		data = firewallFRRData{
+			commonFRRData: commonFRRData{
+				FRRVersion: defaultFrrVersion,
 				Hostname:   cfg.Network.Hostname(),
 				Comment:    comment,
 				ASN:        int64(net.Asn),
@@ -212,10 +212,10 @@ func validate(frrConfigPath string) error {
 	return nil
 }
 
-func assembleVRFs(cfg *Config) ([]VRF, error) {
+func assembleVRFs(cfg *Config) ([]vrf, error) {
 	var (
-		result []VRF
-		frr    *FRR
+		result []vrf
+		frr    *frrVersion
 	)
 
 	if cfg.FRRVersion == nil {
@@ -227,7 +227,7 @@ func assembleVRFs(cfg *Config) ([]VRF, error) {
 		cfg.FRRVersion = frrVersion
 	}
 
-	frr = &FRR{
+	frr = &frrVersion{
 		Major: cfg.FRRVersion.Major(),
 		Minor: cfg.FRRVersion.Minor(),
 	}
@@ -243,7 +243,7 @@ func assembleVRFs(cfg *Config) ([]VRF, error) {
 			return nil, err
 		}
 
-		vrf := VRF{
+		vrf := vrf{
 			ID:             n.Vrf,
 			VNI:            n.Vrf,
 			ImportVRFNames: i.ImportVRFs,

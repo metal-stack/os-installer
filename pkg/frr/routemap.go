@@ -11,30 +11,25 @@ import (
 )
 
 const (
-	// Permit defines an access policy that allows access.
-	Permit AccessPolicy = "permit"
-	// Deny defines an access policy that forbids access.
-	Deny AccessPolicy = "deny"
+	// permit defines an access policy that allows access.
+	permit accessPolicy = "permit"
+	// deny defines an access policy that forbids access.
+	deny accessPolicy = "deny"
 )
 
-// AccessPolicy is a type that represents a policy to manage access roles.
 type (
-	AccessPolicy string
+	// accessPolicy is a type that represents a policy to manage access roles.
+	accessPolicy string
 
 	importPrefix struct {
 		Prefix    netip.Prefix
-		Policy    AccessPolicy
+		Policy    accessPolicy
 		SourceVRF string
 	}
 
 	importRule struct {
 		TargetVRF              string
 		ImportVRFs             []string
-		ImportPrefixes         []importPrefix
-		ImportPrefixesNoExport []importPrefix
-	}
-
-	ImportSettings struct {
 		ImportPrefixes         []importPrefix
 		ImportPrefixesNoExport []importPrefix
 	}
@@ -71,7 +66,7 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 				}
 				i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
 					Prefix:    netip.PrefixFrom(parsed, bl),
-					Policy:    Deny,
+					Policy:    deny,
 					SourceVRF: vrfNameOf(defaultNet),
 				})
 			}
@@ -97,7 +92,7 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 				if !isThere {
 					i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
 						Prefix:    ppfx,
-						Policy:    Permit,
+						Policy:    permit,
 						SourceVRF: vrfNameOf(n),
 					})
 				}
@@ -123,7 +118,7 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 							importExternalNet = true
 							i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
 								Prefix:    netip.MustParsePrefix(pfx),
-								Policy:    Permit,
+								Policy:    permit,
 								SourceVRF: vrfNameOf(e),
 							})
 						}
@@ -156,9 +151,9 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 	return &i, nil
 }
 
-func (i *importRule) prefixLists() []IPPrefixList {
+func (i *importRule) prefixLists() []ipPrefixList {
 	var (
-		result []IPPrefixList
+		result []ipPrefixList
 		seed   = ipPrefixListSeqSeed
 		afs    = []apiv2.NetworkAddressFamily{apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V4, apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V6}
 	)
@@ -180,13 +175,13 @@ func prefixLists(
 	isExported bool,
 	seed int,
 	vrf string,
-) []IPPrefixList {
+) []ipPrefixList {
 	afString := "ip"
 	if *af == apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V6 {
 		afString = "ipv6"
 	}
 
-	var result []IPPrefixList
+	var result []ipPrefixList
 
 	for _, p := range prefixes {
 		if *af == apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V4 && !p.Prefix.Addr().Is4() {
@@ -205,7 +200,7 @@ func prefixLists(
 			}
 			name := p.name(vrf, isExported)
 
-			prefixList := IPPrefixList{
+			prefixList := ipPrefixList{
 				Name:          name,
 				Spec:          spec,
 				AddressFamily: afString,
@@ -236,7 +231,7 @@ func stringSliceToIPPrefix(s []string, sourceVrf string) []importPrefix {
 		}
 		result = append(result, importPrefix{
 			Prefix:    ipp,
-			Policy:    Permit,
+			Policy:    permit,
 			SourceVRF: sourceVrf,
 		})
 	}
@@ -276,8 +271,8 @@ func vrfNamesOf(networks []*apiv2.MachineNetwork) []string {
 	return result
 }
 
-func byName(prefixLists []IPPrefixList) map[string]IPPrefixList {
-	byName := map[string]IPPrefixList{}
+func byName(prefixLists []ipPrefixList) map[string]ipPrefixList {
+	byName := map[string]ipPrefixList{}
 	for _, prefixList := range prefixLists {
 		if _, isPresent := byName[prefixList.Name]; isPresent {
 			continue
@@ -289,8 +284,8 @@ func byName(prefixLists []IPPrefixList) map[string]IPPrefixList {
 	return byName
 }
 
-func (i *importRule) routeMaps() []RouteMap {
-	var result []RouteMap
+func (i *importRule) routeMaps() []routeMap {
+	var result []routeMap
 
 	order := routeMapOrderSeed
 	byName := byName(i.prefixLists())
@@ -311,9 +306,9 @@ func (i *importRule) routeMaps() []RouteMap {
 			entries = append(entries, "set community additive no-export")
 		}
 
-		routeMap := RouteMap{
+		routeMap := routeMap{
 			Name:    routeMapName(i.TargetVRF),
-			Policy:  string(Permit),
+			Policy:  string(permit),
 			Order:   order,
 			Entries: entries,
 		}
@@ -322,9 +317,9 @@ func (i *importRule) routeMaps() []RouteMap {
 		result = append(result, routeMap)
 	}
 
-	routeMap := RouteMap{
+	routeMap := routeMap{
 		Name:   routeMapName(i.TargetVRF),
-		Policy: string(Deny),
+		Policy: string(deny),
 		Order:  order,
 	}
 
