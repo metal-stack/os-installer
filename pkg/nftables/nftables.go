@@ -107,12 +107,6 @@ type (
 		Address       string
 	}
 
-	// NftablesValidator can validate configuration for nftables rules.
-	NftablesValidator struct {
-		path string
-		log  *slog.Logger
-	}
-
 	NftablesReloader struct{}
 )
 

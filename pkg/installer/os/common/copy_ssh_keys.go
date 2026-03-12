@@ -38,12 +38,7 @@ func (d *DefaultOS) CopySSHKeys(ctx context.Context) error {
 		return err
 	}
 
-	var lines []string
-	for _, key := range d.allocation.SshPublicKeys {
-		lines = append(lines, key)
-	}
-
-	err = d.fs.WriteFile(sshAuthorizedKeysPath, []byte(strings.Join(lines, "\n")), 0600)
+	err = d.fs.WriteFile(sshAuthorizedKeysPath, []byte(strings.Join(d.allocation.SshPublicKeys, "\n")), 0600)
 	if err != nil {
 		return err
 	}

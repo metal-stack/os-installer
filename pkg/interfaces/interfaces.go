@@ -182,8 +182,6 @@ func configureLanInterfaces(ctx context.Context, cfg *Config) error {
 }
 
 func configureBridges(ctx context.Context, cfg *Config) error {
-	const offset = 20
-
 	ifaces, err := cfg.Network.EVPNIfaces()
 	if err != nil {
 		return fmt.Errorf("unable to get evpn interfaces: %w", err)
