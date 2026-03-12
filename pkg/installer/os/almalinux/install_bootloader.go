@@ -105,7 +105,7 @@ func (o *os) GrubInstall(ctx context.Context, cmdLine string) error {
 		return nil
 	}
 
-	v, err := o.DefaultOS.GetKernelVersion(o.InitramdiskFormatString())
+	v, err := o.GetKernelVersion(o.InitramdiskFormatString())
 	if err != nil {
 		return err
 	}

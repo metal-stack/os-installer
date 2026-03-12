@@ -26,5 +26,5 @@ func (o *os) WriteNTPConf(ctx context.Context) error {
 		return fmt.Errorf("almalinux as firewall is currently not supported")
 	}
 
-	return o.DefaultOS.WriteNtpConfToPath(chronyConfigPath, ntpServers)
+	return o.WriteNtpConfToPath(chronyConfigPath, ntpServers)
 }

@@ -45,9 +45,7 @@ func (d *DefaultOS) WriteNTPConf(ctx context.Context) error {
 			return err
 		}
 
-		d.WriteNtpConfToPath(ChronyConfigPath, ntpServers)
-
-		return nil
+		return d.WriteNtpConfToPath(ChronyConfigPath, ntpServers)
 	}
 
 	return d.WriteNtpConfToPath(TimesyncdConfigPath, ntpServers)
