@@ -22,7 +22,7 @@ GRUB_SERIAL_COMMAND="serial --speed=%s --unit=%s --word=8"
 `
 )
 
-func (d *DefaultOS) GrubInstall(ctx context.Context, bootloaderID, cmdLine string) error {
+func (d *CommonTasks) GrubInstall(ctx context.Context, bootloaderID, cmdLine string) error {
 	serialPort, serialSpeed, err := d.FigureOutSerialSpeed()
 	if err != nil {
 		return err
@@ -134,7 +134,7 @@ func (d *DefaultOS) GrubInstall(ctx context.Context, bootloaderID, cmdLine strin
 	return nil
 }
 
-func (d *DefaultOS) FigureOutSerialSpeed() (serialPort, serialSpeed string, err error) {
+func (d *CommonTasks) FigureOutSerialSpeed() (serialPort, serialSpeed string, err error) {
 	// ttyS1,115200n8
 	serialPort, serialSpeed, found := strings.Cut(d.details.Console, ",")
 	if !found {

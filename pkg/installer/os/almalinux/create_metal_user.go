@@ -8,7 +8,7 @@ import (
 )
 
 func (o *os) CreateMetalUser(ctx context.Context) error {
-	err := o.DefaultOS.CreateMetalUser(ctx, o.SudoGroup())
+	err := o.CommonTasks.CreateMetalUser(ctx, o.SudoGroup())
 	if err != nil {
 		return err
 	}

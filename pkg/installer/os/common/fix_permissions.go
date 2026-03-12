@@ -5,7 +5,7 @@ import (
 	"io/fs"
 )
 
-func (d *DefaultOS) FixPermissions(ctx context.Context) error {
+func (d *CommonTasks) FixPermissions(ctx context.Context) error {
 	for p, perm := range map[string]fs.FileMode{
 		"/var/tmp": 01777,
 	} {

@@ -8,13 +8,13 @@ import (
 
 type (
 	os struct {
-		*oscommon.DefaultOS
+		*oscommon.CommonTasks
 	}
 )
 
 func New(cfg *oscommon.Config) *os {
 	return &os{
-		DefaultOS: oscommon.New(cfg),
+		CommonTasks: oscommon.New(cfg),
 	}
 }
 
@@ -23,13 +23,13 @@ func (o *os) BootloaderID() string {
 }
 
 func (o *os) WriteBootInfo(ctx context.Context, cmdLine string) error {
-	return o.DefaultOS.WriteBootInfo(ctx, o.InitramdiskFormatString(), o.BootloaderID(), cmdLine)
+	return o.CommonTasks.WriteBootInfo(ctx, o.InitramdiskFormatString(), o.BootloaderID(), cmdLine)
 }
 
 func (o *os) CreateMetalUser(ctx context.Context) error {
-	return o.DefaultOS.CreateMetalUser(ctx, o.SudoGroup())
+	return o.CommonTasks.CreateMetalUser(ctx, o.SudoGroup())
 }
 
 func (o *os) GrubInstall(ctx context.Context, cmdLine string) error {
-	return o.DefaultOS.GrubInstall(ctx, o.BootloaderID(), cmdLine)
+	return o.CommonTasks.GrubInstall(ctx, o.BootloaderID(), cmdLine)
 }

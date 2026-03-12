@@ -9,7 +9,7 @@ import (
 	"github.com/metal-stack/os-installer/pkg/nftables"
 )
 
-func (d *DefaultOS) ConfigureNetwork(ctx context.Context) error {
+func (d *CommonTasks) ConfigureNetwork(ctx context.Context) error {
 	if err := interfaces.ConfigureInterfaces(ctx, &interfaces.Config{
 		Log:     d.log,
 		Network: d.network,

@@ -45,42 +45,53 @@ type (
 		Exec           *exec.CmdExecutor
 		MachineDetails *v1.MachineDetails
 		Allocation     *apiv2.MachineAllocation
+
+		// customization options from installer config
+		Name         *string
+		BootloaderID *string
 	}
 
-	DefaultOS struct {
+	CommonTasks struct {
 		log        *slog.Logger
 		fs         *afero.Afero
 		details    *v1.MachineDetails
 		allocation *apiv2.MachineAllocation
 		exec       *exec.CmdExecutor
 		network    *network.Network
+
+		bootloaderID *string
 	}
 )
 
-func New(cfg *Config) *DefaultOS {
-	return &DefaultOS{
-		log:        cfg.Log,
-		fs:         cfg.Fs,
-		details:    cfg.MachineDetails,
-		allocation: cfg.Allocation,
-		exec:       cfg.Exec,
-		network:    network.New(cfg.Allocation),
+func New(cfg *Config) *CommonTasks {
+	return &CommonTasks{
+		log:          cfg.Log,
+		fs:           cfg.Fs,
+		details:      cfg.MachineDetails,
+		allocation:   cfg.Allocation,
+		exec:         cfg.Exec,
+		network:      network.New(cfg.Allocation),
+		bootloaderID: cfg.BootloaderID,
 	}
 }
 
-func (d *DefaultOS) SudoGroup() string {
+func (d *CommonTasks) SudoGroup() string {
 	return "sudo"
 }
 
-func (d *DefaultOS) BootloaderID() string {
-	panic("default os does not provide a bootloader id")
+func (d *CommonTasks) BootloaderID() string {
+	if d.bootloaderID == nil {
+		panic("no bootloader id provided for default os")
+	}
+
+	return *d.bootloaderID
 }
 
-func (d *DefaultOS) InitramdiskFormatString() string {
+func (d *CommonTasks) InitramdiskFormatString() string {
 	return "initrd.img-%s"
 }
 
-func (d *DefaultOS) GetKernelVersion(initramdiskFormatString string) (string, error) {
+func (d *CommonTasks) GetKernelVersion(initramdiskFormatString string) (string, error) {
 	kern, _, err := d.KernelAndInitrdPath(initramdiskFormatString)
 	if err != nil {
 		return "", err
@@ -94,7 +105,7 @@ func (d *DefaultOS) GetKernelVersion(initramdiskFormatString string) (string, er
 	return version, nil
 }
 
-func (d *DefaultOS) KernelAndInitrdPath(initramdiskFormatString string) (kern string, initrd string, err error) {
+func (d *CommonTasks) KernelAndInitrdPath(initramdiskFormatString string) (kern string, initrd string, err error) {
 	// Debian 10
 	// root@1f223b59051bcb12:/boot# ls -l
 	// total 83500
@@ -168,7 +179,7 @@ func (d *DefaultOS) KernelAndInitrdPath(initramdiskFormatString string) (kern st
 	return
 }
 
-func (d *DefaultOS) fileExists(filename string) bool {
+func (d *CommonTasks) fileExists(filename string) bool {
 	info, err := d.fs.Stat(filename)
 	if os.IsNotExist(err) {
 		return false
@@ -185,4 +196,13 @@ func runFromCI() bool {
 	}
 
 	return ci
+}
+
+func FileExists(fs *afero.Afero, filename string) bool {
+	info, err := fs.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return !info.IsDir()
 }

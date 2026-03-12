@@ -11,7 +11,7 @@ const (
 	ResolvConfPath = "/etc/resolv.conf"
 )
 
-func (d *DefaultOS) WriteResolvConf(ctx context.Context) error {
+func (d *CommonTasks) WriteResolvConf(ctx context.Context) error {
 	d.log.Info("write configuration", "file", ResolvConfPath)
 	// Must be written here because during docker build this file is synthetic
 	err := d.fs.Remove(ResolvConfPath)

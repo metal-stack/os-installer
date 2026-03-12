@@ -14,7 +14,7 @@ const (
 	ignitionUserdataPath = "/etc/metal/config.ign"
 )
 
-func (d *DefaultOS) ProcessUserdata(ctx context.Context) error {
+func (d *CommonTasks) ProcessUserdata(ctx context.Context) error {
 	if ok := d.fileExists(UserdataPath); !ok {
 		d.log.Info("no userdata present, not processing userdata", "path", UserdataPath)
 		return nil

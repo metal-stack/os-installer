@@ -12,7 +12,7 @@ const (
 	BootInfoPath = "/etc/metal/boot-info.yaml"
 )
 
-func (d *DefaultOS) WriteBootInfo(ctx context.Context, initramdiskFormatString, bootloaderID, cmdLine string) error {
+func (d *CommonTasks) WriteBootInfo(ctx context.Context, initramdiskFormatString, bootloaderID, cmdLine string) error {
 	kern, initrd, err := d.KernelAndInitrdPath(initramdiskFormatString)
 	if err != nil {
 		return err

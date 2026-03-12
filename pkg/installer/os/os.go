@@ -29,6 +29,14 @@ func New(cfg *oscommon.Config) (oscommon.OperatingSystem, error) {
 		}
 	}
 
+	if cfg.Name != nil {
+		return fromOsName(*cfg.Name, cfg)
+	}
+
+	return detectOS(cfg)
+}
+
+func detectOS(cfg *oscommon.Config) (oscommon.OperatingSystem, error) {
 	content, err := cfg.Fs.ReadFile("/etc/os-release")
 	if err != nil {
 		return nil, err
@@ -48,17 +56,25 @@ func New(cfg *oscommon.Config) (oscommon.OperatingSystem, error) {
 			os = unquoted
 		}
 
-		switch os := osName(strings.ToLower(os)); os {
-		case ubuntuOS:
-			return ubuntu.New(cfg), nil
-		case debianOS:
-			return debian.New(cfg), nil
-		case almalinuxOS:
-			return almalinux.New(cfg), nil
-		default:
-			return nil, fmt.Errorf("unsupported operating system: %s", os)
-		}
+		return fromOsName(os, cfg)
 	}
 
-	return nil, fmt.Errorf("unable to detect OS")
+	return nil, fmt.Errorf("unable to detect os, no ID field found /etc/os-release")
+}
+
+func fromOsName(name string, cfg *oscommon.Config) (oscommon.OperatingSystem, error) {
+	switch os := osName(strings.ToLower(name)); os {
+	case ubuntuOS:
+		cfg.Log.Info("using ubuntu os-installer")
+		return ubuntu.New(cfg), nil
+	case debianOS:
+		cfg.Log.Info("using debian os-installer")
+		return debian.New(cfg), nil
+	case almalinuxOS:
+		cfg.Log.Info("using almalinux os-installer")
+		return almalinux.New(cfg), nil
+	default:
+		cfg.Log.Info("using default os-installer implementation")
+		return oscommon.NewDefaultOS(cfg), nil
+	}
 }
