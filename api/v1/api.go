@@ -53,19 +53,11 @@ type MachineDetails struct {
 	RootUUID string `yaml:"root_uuid"`
 }
 
-// FIXME legacy structs remove once old images are gone
+type BuildMeta struct {
+	Version  string `json:"buildVersion" yaml:"buildVersion"`
+	Date     string `json:"buildDate" yaml:"buildDate"`
+	SHA      string `json:"buildSHA" yaml:"buildSHA"`
+	Revision string `json:"buildRevision" yaml:"buildRevision"`
 
-type (
-	// Disk is a physical Disk
-	Disk struct {
-		// Device the name of the disk device visible from kernel side, e.g. sda
-		Device string
-		// Partitions to create on this disk, order is preserved
-		Partitions []Partition
-	}
-	Partition struct {
-		Label      string
-		Filesystem string
-		Properties map[string]string
-	}
-)
+	IgnitionVersion string `json:"ignitionVersion" yaml:"ignitionVersion"`
+}
