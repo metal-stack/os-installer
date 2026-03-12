@@ -66,48 +66,46 @@ type (
 	// NftablesData represents the information required to render nftables configuration.
 	NftablesData struct {
 		Comment       string
-		SNAT          []SNAT
-		DNSProxyDNAT  DNAT
+		SNAT          []snat
+		DNSProxyDNAT  dnat
 		VPN           bool
 		ForwardPolicy string
-		FirewallRules *FirewallRules
-		Input         Input
+		FirewallRules *firewallRules
+		Input         input
 	}
 
-	Input struct {
+	input struct {
 		InInterfaces []string
 	}
 
-	FirewallRules struct {
+	firewallRules struct {
 		Egress  []string
 		Ingress []string
 	}
 
-	// SNAT holds the information required to configure Source NAT.
-	SNAT struct {
+	// snat holds the information required to configure Source NAT.
+	snat struct {
 		Comment      string
 		OutInterface string
-		OutIntSpec   AddrSpec
-		SourceSpecs  []AddrSpec
+		OutIntSpec   addrSpec
+		SourceSpecs  []addrSpec
 	}
 
-	// DNAT holds the information required to configure DNAT.
-	DNAT struct {
+	// dnat holds the information required to configure dnat.
+	dnat struct {
 		Comment      string
 		InInterfaces []string
 		SAddr        string
 		DAddr        string
 		Port         string
 		Zone         string
-		DestSpec     AddrSpec
+		DestSpec     addrSpec
 	}
 
-	AddrSpec struct {
+	addrSpec struct {
 		AddressFamily string
 		Address       string
 	}
-
-	NftablesReloader struct{}
 )
 
 // Renders renders nftables rules according to the given input data and reloads the service if necessary
@@ -169,8 +167,8 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 	return
 }
 
-func getInput(cfg *Config) Input {
-	input := Input{}
+func getInput(cfg *Config) input {
+	input := input{}
 	for _, n := range cfg.Network.AllocationNetworks() {
 		switch n.NetworkType {
 		case apiv2.NetworkType_NETWORK_TYPE_CHILD, apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED:
@@ -180,9 +178,9 @@ func getInput(cfg *Config) Input {
 	return input
 }
 
-func getSNAT(cfg *Config) ([]SNAT, error) {
+func getSNAT(cfg *Config) ([]snat, error) {
 	var (
-		result         []SNAT
+		result         []snat
 		defaultNetwork *apiv2.MachineNetwork
 		defaultAF      string
 	)
@@ -216,7 +214,7 @@ func getSNAT(cfg *Config) ([]SNAT, error) {
 
 		cfg.Log.Info("getSNAT", "network", n.Network)
 		var (
-			sources []AddrSpec
+			sources []addrSpec
 			cmt     = fmt.Sprintf("snat (networkid: %s)", n.Network)
 			svi     = fmt.Sprintf("vlan%d", n.Vrf)
 			vrf     = fmt.Sprintf("vrf%d", n.Vrf)
@@ -228,21 +226,21 @@ func getSNAT(cfg *Config) ([]SNAT, error) {
 				return nil, fmt.Errorf("unable to determine address family: %w", err)
 			}
 
-			sources = append(sources, AddrSpec{
+			sources = append(sources, addrSpec{
 				Address:       pfx,
 				AddressFamily: af,
 			})
 			cfg.Log.Info("getSNAT", "network", n.Network, "prefixes", pfx, "af", af)
 		}
 
-		s := SNAT{
+		s := snat{
 			Comment:      cmt,
 			OutInterface: svi,
 			SourceSpecs:  sources,
 		}
 
 		if cfg.EnableDNSProxy && (vrf == defaultNetworkName) {
-			s.OutIntSpec = AddrSpec{
+			s.OutIntSpec = addrSpec{
 				AddressFamily: defaultAF,
 				Address:       defaultNetwork.Ips[0],
 			}
@@ -254,7 +252,7 @@ func getSNAT(cfg *Config) ([]SNAT, error) {
 	return result, nil
 }
 
-func getDNSProxyDNAT(cfg *Config) DNAT {
+func getDNSProxyDNAT(cfg *Config) dnat {
 	svis := []string{}
 	for _, n := range cfg.Network.AllocationNetworks() {
 		switch n.NetworkType {
@@ -267,7 +265,7 @@ func getDNSProxyDNAT(cfg *Config) DNAT {
 
 	n, err := cfg.Network.GetDefaultRouteNetwork()
 	if err != nil {
-		return DNAT{}
+		return dnat{}
 	}
 
 	ip, _ := netip.ParseAddr(n.Ips[0])
@@ -279,23 +277,23 @@ func getDNSProxyDNAT(cfg *Config) DNAT {
 		saddr = "fd00::/8"
 		daddr = "@proxy_dns_servers_v6"
 	}
-	return DNAT{
+	return dnat{
 		Comment:      "dnat to dns proxy",
 		InInterfaces: svis,
 		SAddr:        saddr,
 		DAddr:        daddr,
 		Port:         dnsPort,
 		Zone:         dnsProxyZone,
-		DestSpec: AddrSpec{
+		DestSpec: addrSpec{
 			AddressFamily: af,
 			Address:       n.Ips[0],
 		},
 	}
 }
 
-func getFirewallRules(cfg *Config) (*FirewallRules, error) {
+func getFirewallRules(cfg *Config) (*firewallRules, error) {
 	if cfg.Network.FirewallRules() == nil {
-		return &FirewallRules{}, nil
+		return &firewallRules{}, nil
 	}
 	var (
 		egressRules           = []string{"# egress rules specified during firewall creation"}
@@ -363,7 +361,7 @@ func getFirewallRules(cfg *Config) (*FirewallRules, error) {
 			ingressRules = append(ingressRules, fmt.Sprintf("%s %s saddr %s %s dport { %s } counter accept comment %q", destinationSpec, af, saddr, strings.ToLower(*protocolString), strings.Join(ports, ","), r.Comment))
 		}
 	}
-	return &FirewallRules{
+	return &firewallRules{
 		Egress:  egressRules,
 		Ingress: ingressRules,
 	}, nil
