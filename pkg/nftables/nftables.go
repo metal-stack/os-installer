@@ -46,8 +46,9 @@ var (
 
 type (
 	Config struct {
-		Log    *slog.Logger
-		Reload bool
+		Log      *slog.Logger
+		Reload   bool
+		Validate bool
 
 		Network *network.Network
 
@@ -147,6 +148,12 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 		TemplateString: templateString,
 		Data:           data,
 		Fs:             cfg.fs,
+		Validate: func(path string) error {
+			if !cfg.Validate {
+				return nil
+			}
+			return validate(cfg)
+		},
 	})
 	if err != nil {
 		return false, err
@@ -382,8 +389,8 @@ func getAddressFamily(p string) (string, error) {
 	return family, nil
 }
 
-// Validate validates network interfaces configuration.
-func Validate(cfg *Config) error {
+// validate validates network interfaces configuration.
+func validate(cfg *Config) error {
 	cfg.Log.Info("running 'nft --check --file' to validate changes.", "file", nftrulesPath)
 
 	cmd := exec.Command("nft", "--check", "--file", nftrulesPath)

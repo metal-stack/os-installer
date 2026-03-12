@@ -1,4 +1,4 @@
-package almalinux_test
+package almalinux
 
 import (
 	"context"

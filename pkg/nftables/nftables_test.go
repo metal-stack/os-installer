@@ -353,6 +353,7 @@ func TestRender(t *testing.T) {
 				Network:        network.New(tt.allocation),
 				EnableDNSProxy: tt.enableDNSProxy,
 				ForwardPolicy:  tt.forwardPolicy,
+				Validate:       false,
 			})
 
 			if diff := cmp.Diff(tt.wantErr, gotErr, test.ErrorStringComparer()); diff != "" {

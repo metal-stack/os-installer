@@ -426,6 +426,7 @@ func TestRender(t *testing.T) {
 				fs:         fs,
 				Network:    network.New(tt.allocation),
 				FRRVersion: tt.frrVersion,
+				Validate:   false,
 			})
 
 			if diff := cmp.Diff(tt.wantErr, gotErr, test.ErrorStringComparer()); diff != "" {

@@ -34,6 +34,7 @@ func (d *DefaultOS) ConfigureNetwork(ctx context.Context) error {
 	if _, err := nftables.Render(ctx, &nftables.Config{
 		Log:            d.log,
 		Reload:         false,
+		Validate:       true,
 		Network:        d.network,
 		EnableDNSProxy: false,
 		ForwardPolicy:  nftables.ForwardPolicyDrop,
