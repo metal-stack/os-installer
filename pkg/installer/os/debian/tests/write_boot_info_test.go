@@ -111,7 +111,7 @@ func Test_os_WriteBootInfo(t *testing.T) {
 				return
 			}
 
-			content, err := fs.ReadFile(oscommon.BootInfoPath)
+			content, err := fs.ReadFile(v1.BootInfoPath)
 			require.NoError(t, err)
 
 			var bootInfo v1.Bootinfo

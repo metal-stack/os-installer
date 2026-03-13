@@ -10,12 +10,8 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-const (
-	BuildMetaPath = "/etc/metal/build-meta.yaml"
-)
-
 func (d *CommonTasks) WriteBuildMeta(ctx context.Context) error {
-	d.log.Info("writing build meta file", "path", BuildMetaPath)
+	d.log.Info("writing build meta file", "path", v1.BuildMetaPath)
 
 	meta := &v1.BuildMeta{
 		Version:  v.Version,
@@ -41,5 +37,5 @@ func (d *CommonTasks) WriteBuildMeta(ctx context.Context) error {
 
 	content = append([]byte("---\n"), content...)
 
-	return d.fs.WriteFile(BuildMetaPath, content, 0644)
+	return d.fs.WriteFile(v1.BuildMetaPath, content, 0644)
 }

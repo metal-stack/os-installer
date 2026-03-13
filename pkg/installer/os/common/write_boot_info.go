@@ -8,10 +8,6 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-const (
-	BootInfoPath = "/etc/metal/boot-info.yaml"
-)
-
 func (d *CommonTasks) WriteBootInfo(ctx context.Context, initramdiskFormatString, bootloaderID, cmdLine string) error {
 	kern, initrd, err := d.KernelAndInitrdPath(initramdiskFormatString)
 	if err != nil {
@@ -28,5 +24,5 @@ func (d *CommonTasks) WriteBootInfo(ctx context.Context, initramdiskFormatString
 		return fmt.Errorf("unable to write boot-info.yaml: %w", err)
 	}
 
-	return d.fs.WriteFile(BootInfoPath, content, 0700)
+	return d.fs.WriteFile(v1.BootInfoPath, content, 0700)
 }

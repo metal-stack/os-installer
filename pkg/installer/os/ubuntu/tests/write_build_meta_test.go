@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
+	v1 "github.com/metal-stack/os-installer/api/v1"
 	"github.com/metal-stack/os-installer/pkg/exec"
 	oscommon "github.com/metal-stack/os-installer/pkg/installer/os/common"
 	"github.com/metal-stack/os-installer/pkg/installer/os/ubuntu"
@@ -71,7 +72,7 @@ ignitionVersion: Ignition v0.36.2
 				return
 			}
 
-			content, err := fs.ReadFile(oscommon.BuildMetaPath)
+			content, err := fs.ReadFile(v1.BuildMetaPath)
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.want, string(content))
