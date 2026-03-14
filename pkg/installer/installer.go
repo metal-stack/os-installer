@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"slices"
 	"time"
 
+	"buf.build/go/protoyaml"
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	v1 "github.com/metal-stack/os-installer/api/v1"
 	"github.com/metal-stack/os-installer/pkg/exec"
@@ -17,26 +19,80 @@ import (
 )
 
 type installer struct {
-	log  *slog.Logger
-	cfg  *v1.Config
-	oss  oscommon.OperatingSystem
-	fs   *afero.Afero
-	exec *exec.CmdExecutor
+	log        *slog.Logger
+	cfg        *v1.Config
+	oss        oscommon.OperatingSystem
+	fs         *afero.Afero
+	exec       *exec.CmdExecutor
+	details    *v1.MachineDetails
+	allocation *apiv2.MachineAllocation
 }
 
-func Install(ctx context.Context, log *slog.Logger, details *v1.MachineDetails, allocation *apiv2.MachineAllocation) error {
-	log = log.WithGroup("os-installer")
-
-	var (
-		start = time.Now()
-		fs    = &afero.Afero{
+func New(log *slog.Logger, details *v1.MachineDetails, allocation *apiv2.MachineAllocation) *installer {
+	return &installer{
+		log: log.WithGroup("os-installer"),
+		cfg: &v1.Config{},
+		fs: &afero.Afero{
 			Fs: afero.OsFs{},
-		}
+		},
+		details:    details,
+		allocation: allocation,
+	}
+}
+
+func (i *installer) PersistConfigurations() error {
+	detailsBytes, err := yaml.Marshal(i.details)
+	if err != nil {
+		return fmt.Errorf("unable to marshal machine details: %w", err)
+	}
+	err = os.WriteFile(v1.MachineDetailsPath, detailsBytes, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("unable to persist machine details: %w", err)
+	}
+
+	allocationBytes, err := protoyaml.Marshal(i.allocation)
+	if err != nil {
+		return fmt.Errorf("unable to marshal machine allocation: %w", err)
+	}
+	err = os.WriteFile(v1.MachineAllocationPath, allocationBytes, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("unable to persist machine allocation: %w", err)
+	}
+	return nil
+}
+
+func ReadConfigurations() (*v1.MachineDetails, *apiv2.MachineAllocation, error) {
+	data, err := os.ReadFile(v1.MachineDetailsPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to read machine details: %w", err)
+	}
+
+	var details v1.MachineDetails
+	if err = yaml.Unmarshal(data, &details); err != nil {
+		return nil, nil, fmt.Errorf("unable to parse machine details: %w", err)
+	}
+
+	data, err = os.ReadFile(v1.MachineAllocationPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to read machine allocation: %w", err)
+	}
+
+	var allocation apiv2.MachineAllocation
+	if err = protoyaml.Unmarshal(data, &allocation); err != nil {
+		return nil, nil, fmt.Errorf("unable to parse machine allocation: %w", err)
+	}
+
+	return &details, &allocation, nil
+}
+
+func (i *installer) Install(ctx context.Context) error {
+	var (
+		start           = time.Now()
 		installerConfig = &v1.Config{}
 	)
 
-	if oscommon.FileExists(fs, v1.InstallerConfigPath) {
-		data, err := fs.ReadFile(v1.InstallerConfigPath)
+	if oscommon.FileExists(i.fs, v1.InstallerConfigPath) {
+		data, err := i.fs.ReadFile(v1.InstallerConfigPath)
 		if err != nil {
 			return fmt.Errorf("unable to read installer config: %w", err)
 		}
@@ -47,10 +103,10 @@ func Install(ctx context.Context, log *slog.Logger, details *v1.MachineDetails, 
 	}
 
 	oss, err := operatingsystem.New(&oscommon.Config{
-		Log:            log,
-		Fs:             fs,
-		MachineDetails: details,
-		Allocation:     allocation,
+		Log:            i.log,
+		Fs:             i.fs,
+		MachineDetails: i.details,
+		Allocation:     i.allocation,
 		Name:           installerConfig.OsName,
 		BootloaderID:   installerConfig.Overwrites.BootloaderID,
 	})
@@ -58,13 +114,9 @@ func Install(ctx context.Context, log *slog.Logger, details *v1.MachineDetails, 
 		return fmt.Errorf("os detection failed: %w", err)
 	}
 
-	i := installer{
-		log:  log,
-		cfg:  installerConfig,
-		oss:  oss,
-		exec: exec.New(log),
-		fs:   fs,
-	}
+	i.cfg = installerConfig
+	i.oss = oss
+	i.exec = exec.New(i.log)
 
 	if err = i.run(ctx); err != nil {
 		i.log.Info("running os installer failed", "took", time.Since(start).String())
