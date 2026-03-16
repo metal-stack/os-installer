@@ -19,7 +19,7 @@ func DetectVersion() (*semver.Version, error) {
 	c := exec.Command(vtysh, "-c", "show version")
 	out, err := c.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("unable to detect frr version with dpkg: %w", err)
+		return nil, fmt.Errorf("unable to detect frr version with vtysh output:%s error: %w", string(out), err)
 	}
 
 	var frrVersion string
