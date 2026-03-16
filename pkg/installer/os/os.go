@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/metal-stack/os-installer/pkg/exec"
 	"github.com/metal-stack/os-installer/pkg/installer/os/almalinux"
 	oscommon "github.com/metal-stack/os-installer/pkg/installer/os/common"
 	"github.com/metal-stack/os-installer/pkg/installer/os/debian"
@@ -25,10 +26,24 @@ type (
 )
 
 func New(cfg *oscommon.Config) (oscommon.OperatingSystem, error) {
+	if cfg.Log == nil {
+		return nil, fmt.Errorf("log must be passed to os-installer")
+	}
+	if cfg.Allocation == nil {
+		return nil, fmt.Errorf("allocation must be passed to os-installer")
+	}
+	if cfg.MachineDetails == nil {
+		return nil, fmt.Errorf("machine details must be passed to os-installer")
+	}
+
 	if cfg.Fs == nil {
 		cfg.Fs = &afero.Afero{
 			Fs: afero.OsFs{},
 		}
+	}
+
+	if cfg.Exec == nil {
+		cfg.Exec = exec.New(cfg.Log)
 	}
 
 	if cfg.Name != nil {

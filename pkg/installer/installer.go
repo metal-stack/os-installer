@@ -29,14 +29,17 @@ type installer struct {
 }
 
 func New(log *slog.Logger, details *v1.MachineDetails, allocation *apiv2.MachineAllocation) *installer {
+	log = log.WithGroup("os-installer")
+
 	return &installer{
-		log: log.WithGroup("os-installer"),
+		log: log,
 		cfg: &v1.Config{},
 		fs: &afero.Afero{
 			Fs: afero.OsFs{},
 		},
 		details:    details,
 		allocation: allocation,
+		exec:       exec.New(log),
 	}
 }
 
@@ -104,6 +107,7 @@ func (i *installer) Install(ctx context.Context) error {
 
 	oss, err := operatingsystem.New(&oscommon.Config{
 		Log:            i.log,
+		Exec:           i.exec,
 		Fs:             i.fs,
 		MachineDetails: i.details,
 		Allocation:     i.allocation,
@@ -116,7 +120,6 @@ func (i *installer) Install(ctx context.Context) error {
 
 	i.cfg = installerConfig
 	i.oss = oss
-	i.exec = exec.New(i.log)
 
 	if err = i.run(ctx); err != nil {
 		i.log.Info("running os installer failed", "took", time.Since(start).String())
