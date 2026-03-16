@@ -12,13 +12,13 @@ const (
 )
 
 func (o *os) WriteNTPConf(ctx context.Context) error {
-	if len(o.allocation.NtpServer) == 0 {
+	if len(o.allocation.NtpServers) == 0 {
 		return nil
 	}
 
 	var ntpServers []string
 
-	for _, ntp := range o.allocation.NtpServer {
+	for _, ntp := range o.allocation.NtpServers {
 		ntpServers = append(ntpServers, ntp.Address)
 	}
 

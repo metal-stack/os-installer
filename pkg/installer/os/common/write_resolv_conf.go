@@ -24,9 +24,9 @@ func (d *CommonTasks) WriteResolvConf(ctx context.Context) error {
 nameserver 8.8.4.4
 `)
 
-	if len(d.allocation.DnsServer) > 0 {
+	if len(d.allocation.DnsServers) > 0 {
 		var s strings.Builder
-		for _, dnsServer := range d.allocation.DnsServer {
+		for _, dnsServer := range d.allocation.DnsServers {
 			s.WriteString("nameserver " + dnsServer.Ip + "\n")
 		}
 

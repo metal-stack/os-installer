@@ -30,7 +30,7 @@ func Test_os_WriteNTPConf(t *testing.T) {
 			},
 			allocation: &apiv2.MachineAllocation{
 				AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE,
-				NtpServer: []*apiv2.NTPServer{
+				NtpServers: []*apiv2.NTPServer{
 					{Address: "custom.1.ntp.org"},
 					{Address: "custom.2.ntp.org"},
 				},

@@ -15,13 +15,13 @@ const (
 )
 
 func (d *CommonTasks) WriteNTPConf(ctx context.Context) error {
-	if len(d.allocation.NtpServer) == 0 {
+	if len(d.allocation.NtpServers) == 0 {
 		return nil
 	}
 
 	var ntpServers []string
 
-	for _, ntp := range d.allocation.NtpServer {
+	for _, ntp := range d.allocation.NtpServers {
 		ntpServers = append(ntpServers, ntp.Address)
 	}
 

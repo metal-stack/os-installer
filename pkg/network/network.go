@@ -78,7 +78,7 @@ func (n *Network) FirewallRules() *apiv2.FirewallRules {
 }
 
 func (n *Network) NTPServers() (ntpServers []string) {
-	for _, ntpserver := range n.allocation.NtpServer {
+	for _, ntpserver := range n.allocation.NtpServers {
 		ntpServers = append(ntpServers, ntpserver.Address)
 	}
 	return

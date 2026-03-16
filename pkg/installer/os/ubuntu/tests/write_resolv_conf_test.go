@@ -45,7 +45,7 @@ nameserver 8.8.4.4
 		{
 			name: "overwrite resolv.conf with custom DNS",
 			allocation: &apiv2.MachineAllocation{
-				DnsServer: []*apiv2.DNSServer{
+				DnsServers: []*apiv2.DNSServer{
 					{Ip: "1.2.3.4"},
 					{Ip: "5.6.7.8"},
 				},
