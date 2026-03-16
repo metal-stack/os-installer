@@ -84,10 +84,12 @@ type (
 )
 
 func ConfigureInterfaces(ctx context.Context, cfg *Config) error {
+	cfg.Log.Info("create loopback interfaces")
 	if err := configureLoopbackInterface(ctx, cfg); err != nil {
 		return fmt.Errorf("error configuring loopback interface: %w", err)
 	}
 
+	cfg.Log.Info("create lan interfaces")
 	if err := configureLanInterfaces(ctx, cfg); err != nil {
 		return fmt.Errorf("error configuring lan interfaces: %w", err)
 	}
@@ -96,10 +98,12 @@ func ConfigureInterfaces(ctx context.Context, cfg *Config) error {
 		return nil
 	}
 
+	cfg.Log.Info("create bridges")
 	if err := configureBridges(ctx, cfg); err != nil {
 		return fmt.Errorf("error configuring network bridges: %w", err)
 	}
 
+	cfg.Log.Info("create evpn")
 	if err := configureEVPN(ctx, cfg); err != nil {
 		return fmt.Errorf("error configuring evnps: %w", err)
 	}
