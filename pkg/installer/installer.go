@@ -237,7 +237,7 @@ func (i *installer) run(ctx context.Context) error {
 		log.Info("running install task", "start-at", start.String())
 
 		if err := task.fn(ctx); err != nil {
-			i.log.Info("running install task failed", "took", time.Since(start).String())
+			i.log.Error("running install task failed", "error", err, "took", time.Since(start).String())
 			return fmt.Errorf("installation task failed, aborting install: %w", err)
 		}
 	}
