@@ -13,7 +13,7 @@ import (
 )
 
 type (
-	os struct {
+	Os struct {
 		*oscommon.CommonTasks
 		log        *slog.Logger
 		details    *v1.MachineDetails
@@ -24,8 +24,8 @@ type (
 	}
 )
 
-func New(cfg *oscommon.Config) *os {
-	return &os{
+func New(cfg *oscommon.Config) *Os {
+	return &Os{
 		CommonTasks: oscommon.New(cfg),
 		log:         cfg.Log,
 		details:     cfg.MachineDetails,
@@ -36,18 +36,18 @@ func New(cfg *oscommon.Config) *os {
 	}
 }
 
-func (o *os) SudoGroup() string {
+func (o *Os) SudoGroup() string {
 	return "wheel"
 }
 
-func (o *os) BootloaderID() string {
+func (o *Os) BootloaderID() string {
 	return "almalinux"
 }
 
-func (o *os) InitramdiskFormatString() string {
+func (o *Os) InitramdiskFormatString() string {
 	return "initramfs-%s.img"
 }
 
-func (o *os) WriteBootInfo(ctx context.Context, cmdLine string) error {
+func (o *Os) WriteBootInfo(ctx context.Context, cmdLine string) error {
 	return o.CommonTasks.WriteBootInfo(ctx, o.InitramdiskFormatString(), o.BootloaderID(), cmdLine)
 }

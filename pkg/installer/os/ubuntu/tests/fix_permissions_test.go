@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDefaultOS_FixPermissions(t *testing.T) {
+func Test_os_FixPermissions(t *testing.T) {
 	tests := []struct {
 		name    string
 		fsMocks func(fs afero.Fs)

@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDefaultOS_WriteHostname(t *testing.T) {
+func Test_os_WriteHostname(t *testing.T) {
 	tests := []struct {
 		name       string
 		allocation *apiv2.MachineAllocation

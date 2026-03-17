@@ -11,7 +11,7 @@ const (
 	chronyConfigPath = "/etc/chrony.conf"
 )
 
-func (o *os) WriteNTPConf(ctx context.Context) error {
+func (o *Os) WriteNTPConf(ctx context.Context) error {
 	if len(o.allocation.NtpServers) == 0 {
 		return nil
 	}

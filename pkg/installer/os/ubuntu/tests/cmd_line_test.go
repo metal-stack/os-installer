@@ -26,7 +26,7 @@ MD_DEVICE_dev_sda2_ROLE=0
 MD_DEVICE_dev_sda2_DEV=/dev/sda2`
 )
 
-func TestDefaultOS_BuildCMDLine(t *testing.T) {
+func Test_os_BuildCMDLine(t *testing.T) {
 	tests := []struct {
 		name      string
 		details   *v1.MachineDetails

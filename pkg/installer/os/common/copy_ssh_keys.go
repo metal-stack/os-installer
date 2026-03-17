@@ -2,24 +2,13 @@ package oscommon
 
 import (
 	"context"
-	"os/user"
 	"path"
 	"strconv"
 	"strings"
 )
 
 func (d *CommonTasks) CopySSHKeys(ctx context.Context) error {
-	var (
-		sshPath               = path.Join("/home", metalUser, ".ssh")
-		sshAuthorizedKeysPath = path.Join(sshPath, "authorized_keys")
-	)
-
-	err := d.fs.MkdirAll(sshPath, 0700)
-	if err != nil {
-		return err
-	}
-
-	u, err := user.Lookup(metalUser)
+	u, err := d.lookupUserFn(MetalUser)
 	if err != nil {
 		return err
 	}
@@ -29,6 +18,16 @@ func (d *CommonTasks) CopySSHKeys(ctx context.Context) error {
 		return err
 	}
 	gid, err := strconv.Atoi(u.Gid)
+	if err != nil {
+		return err
+	}
+
+	var (
+		sshPath               = path.Join(u.HomeDir, ".ssh")
+		sshAuthorizedKeysPath = path.Join(sshPath, "authorized_keys")
+	)
+
+	err = d.fs.MkdirAll(sshPath, 0700)
 	if err != nil {
 		return err
 	}

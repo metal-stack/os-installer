@@ -10,13 +10,15 @@ import (
 )
 
 const (
-	metalUser = "metal"
+	MetalUser = "metal"
 )
 
+type LookupUserFn func(name string) (*user.User, error)
+
 func (d *CommonTasks) CreateMetalUser(ctx context.Context, sudoGroup string) error {
-	u, err := user.Lookup(metalUser)
+	u, err := d.lookupUserFn(MetalUser)
 	if err != nil {
-		if err.Error() != user.UnknownUserError(metalUser).Error() {
+		if err.Error() != user.UnknownUserError(MetalUser).Error() {
 			return err
 		}
 	}
@@ -26,7 +28,7 @@ func (d *CommonTasks) CreateMetalUser(ctx context.Context, sudoGroup string) err
 
 		_, err = d.exec.Execute(ctx, &exec.Params{
 			Name:    "userdel",
-			Args:    []string{metalUser},
+			Args:    []string{MetalUser},
 			Timeout: 10 * time.Second,
 		})
 		if err != nil {
@@ -36,7 +38,7 @@ func (d *CommonTasks) CreateMetalUser(ctx context.Context, sudoGroup string) err
 
 	_, err = d.exec.Execute(ctx, &exec.Params{
 		Name:    "useradd",
-		Args:    []string{"--create-home", "--uid", "1000", "--gid", sudoGroup, "--shell", "/bin/bash", metalUser},
+		Args:    []string{"--create-home", "--uid", "1000", "--gid", sudoGroup, "--shell", "/bin/bash", MetalUser},
 		Timeout: 10 * time.Second,
 	})
 	if err != nil {
@@ -45,7 +47,7 @@ func (d *CommonTasks) CreateMetalUser(ctx context.Context, sudoGroup string) err
 
 	_, err = d.exec.Execute(ctx, &exec.Params{
 		Name:    "passwd",
-		Args:    []string{metalUser},
+		Args:    []string{MetalUser},
 		Timeout: 10 * time.Second,
 		Stdin:   d.details.Password + "\n" + d.details.Password + "\n",
 	})

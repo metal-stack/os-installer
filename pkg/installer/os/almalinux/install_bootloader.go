@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	defaultGrubPath        = "/etc/default/grub"
+	DefaultGrubPath        = "/etc/default/grub"
+	GrubConfigPath         = "/boot/efi/EFI/almalinux/grub.cfg"
 	defaultGrubFileContent = `GRUB_DEFAULT=0
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR=%s
@@ -21,25 +22,24 @@ GRUB_SERIAL_COMMAND="serial --speed=%s --unit=%s --word=8"
 GRUB_DEVICE=UUID=%s
 GRUB_ENABLE_BLSCFG=false
 `
-	grubConfigPath = "/boot/efi/EFI/almalinux/grub.cfg"
 )
 
-func (o *os) GrubInstall(ctx context.Context, cmdLine string) error {
-	serialSpeed, serialPort, err := o.FigureOutSerialSpeed()
+func (o *Os) GrubInstall(ctx context.Context, cmdLine string) error {
+	serialPort, serialSpeed, err := o.FigureOutSerialSpeed()
 	if err != nil {
 		return err
 	}
 
 	defaultGrub := fmt.Sprintf(defaultGrubFileContent, o.BootloaderID(), cmdLine, serialSpeed, serialPort, o.details.RootUUID)
 
-	err = o.fs.WriteFile(defaultGrubPath, []byte(defaultGrub), 0755)
+	err = o.fs.WriteFile(DefaultGrubPath, []byte(defaultGrub), 0755)
 	if err != nil {
 		return err
 	}
 
 	_, err = o.exec.Execute(ctx, &exec.Params{
 		Name: "grub2-mkconfig",
-		Args: []string{"-o", grubConfigPath},
+		Args: []string{"-o", GrubConfigPath},
 	})
 	if err != nil {
 		return err

@@ -25,7 +25,7 @@ groups:
 	sampleIgnition = `{"ignition":{"config":{},"security":{"tls":{}},"timeouts":{},"version":"2.2.0"}}`
 )
 
-func TestDefaultOS_ProcessUserdata(t *testing.T) {
+func Test_os_ProcessUserdata(t *testing.T) {
 	tests := []struct {
 		name      string
 		details   *v1.MachineDetails

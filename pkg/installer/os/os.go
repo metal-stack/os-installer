@@ -14,6 +14,8 @@ import (
 )
 
 const (
+	OsReleasePath = "/etc/os-release"
+
 	ubuntuOS    = osName("ubuntu")
 	debianOS    = osName("debian")
 	almalinuxOS = osName("almalinux")
@@ -62,7 +64,7 @@ func New(cfg *oscommon.Config) (oscommon.OperatingSystem, error) {
 func detectOS(cfg *oscommon.Config) (oscommon.OperatingSystem, error) {
 	cfg.Log.Info("automatically detecting operating system for installation")
 
-	content, err := cfg.Fs.ReadFile("/etc/os-release")
+	content, err := cfg.Fs.ReadFile(OsReleasePath)
 	if err != nil {
 		return nil, err
 	}
@@ -99,6 +101,9 @@ func fromOsName(name string, cfg *oscommon.Config) (oscommon.OperatingSystem, er
 		cfg.Log.Info("using almalinux os-installer")
 		return almalinux.New(cfg), nil
 	default:
+		if cfg.Name != nil {
+			return nil, fmt.Errorf("os with name %q is not supported", os)
+		}
 		cfg.Log.Info("using default os-installer implementation")
 		return oscommon.NewDefaultOS(cfg), nil
 	}

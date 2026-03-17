@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDefaultOS_UnsetMachineID(t *testing.T) {
+func Test_os_UnsetMachineID(t *testing.T) {
 	tests := []struct {
 		name    string
 		fsMocks func(fs *afero.Afero)

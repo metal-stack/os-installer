@@ -7,7 +7,7 @@ import (
 	"github.com/metal-stack/os-installer/pkg/exec"
 )
 
-func (o *os) CreateMetalUser(ctx context.Context) error {
+func (o *Os) CreateMetalUser(ctx context.Context) error {
 	err := o.CommonTasks.CreateMetalUser(ctx, o.SudoGroup())
 	if err != nil {
 		return err

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/user"
 	"path"
 	"strconv"
 	"strings"
@@ -45,6 +46,7 @@ type (
 		Exec           *exec.CmdExecutor
 		MachineDetails *v1.MachineDetails
 		Allocation     *apiv2.MachineAllocation
+		LookupUserFn   LookupUserFn
 
 		// customization options from installer config
 		Name         *string
@@ -52,23 +54,30 @@ type (
 	}
 
 	CommonTasks struct {
-		log        *slog.Logger
-		fs         *afero.Afero
-		details    *v1.MachineDetails
-		allocation *apiv2.MachineAllocation
-		exec       *exec.CmdExecutor
-		network    *network.Network
+		log          *slog.Logger
+		fs           *afero.Afero
+		details      *v1.MachineDetails
+		allocation   *apiv2.MachineAllocation
+		exec         *exec.CmdExecutor
+		network      *network.Network
+		lookupUserFn LookupUserFn
 	}
 )
 
 func New(cfg *Config) *CommonTasks {
+	lookupUserFn := user.Lookup
+	if cfg.LookupUserFn != nil {
+		lookupUserFn = cfg.LookupUserFn
+	}
+
 	return &CommonTasks{
-		log:        cfg.Log,
-		fs:         cfg.Fs,
-		details:    cfg.MachineDetails,
-		allocation: cfg.Allocation,
-		exec:       cfg.Exec,
-		network:    network.New(cfg.Allocation),
+		log:          cfg.Log,
+		fs:           cfg.Fs,
+		details:      cfg.MachineDetails,
+		allocation:   cfg.Allocation,
+		exec:         cfg.Exec,
+		network:      network.New(cfg.Allocation),
+		lookupUserFn: lookupUserFn,
 	}
 }
 
@@ -148,7 +157,7 @@ func (d *CommonTasks) KernelAndInitrdPath(initramdiskFormatString string) (kern 
 		return "", "", fmt.Errorf("unable to find a System.map, probably no kernel installed: %w", err)
 	}
 	if len(systemMaps) != 1 {
-		return "", "", fmt.Errorf("more or less than a single System.map found (%v), probably no kernel or more than one kernel installed", systemMaps)
+		return "", "", fmt.Errorf("no single System.map found (%v), probably no kernel or more than one kernel installed", systemMaps)
 	}
 
 	systemMap := systemMaps[0]

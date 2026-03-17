@@ -7,29 +7,29 @@ import (
 )
 
 type (
-	os struct {
+	Os struct {
 		*oscommon.CommonTasks
 	}
 )
 
-func New(cfg *oscommon.Config) *os {
-	return &os{
+func New(cfg *oscommon.Config) *Os {
+	return &Os{
 		CommonTasks: oscommon.New(cfg),
 	}
 }
 
-func (o *os) BootloaderID() string {
+func (o *Os) BootloaderID() string {
 	return "metal-debian"
 }
 
-func (o *os) WriteBootInfo(ctx context.Context, cmdLine string) error {
+func (o *Os) WriteBootInfo(ctx context.Context, cmdLine string) error {
 	return o.CommonTasks.WriteBootInfo(ctx, o.InitramdiskFormatString(), o.BootloaderID(), cmdLine)
 }
 
-func (o *os) CreateMetalUser(ctx context.Context) error {
+func (o *Os) CreateMetalUser(ctx context.Context) error {
 	return o.CommonTasks.CreateMetalUser(ctx, o.SudoGroup())
 }
 
-func (o *os) GrubInstall(ctx context.Context, cmdLine string) error {
+func (o *Os) GrubInstall(ctx context.Context, cmdLine string) error {
 	return o.CommonTasks.GrubInstall(ctx, o.BootloaderID(), cmdLine)
 }
