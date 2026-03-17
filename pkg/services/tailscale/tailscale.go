@@ -66,6 +66,7 @@ func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (change
 	} {
 		r, err := systemd_renderer.New(&systemd_renderer.Config{
 			ServiceName:    spec.serviceName,
+			Enable:         cfg.Enable,
 			Log:            cfg.Log,
 			TemplateString: spec.templateString,
 			Data:           c,
@@ -78,12 +79,6 @@ func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (change
 		chg, err := r.Render(ctx, spec.servicePath, cfg.Reload)
 		if err != nil {
 			return chg, err
-		}
-
-		if cfg.Enable {
-			if err := systemd_renderer.Enable(ctx, cfg.Log, spec.serviceName); err != nil {
-				return changed, err
-			}
 		}
 
 		// return changed if one has changed

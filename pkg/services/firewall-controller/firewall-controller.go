@@ -35,6 +35,7 @@ type TemplateData struct {
 func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (changed bool, err error) {
 	r, err := systemd_renderer.New(&systemd_renderer.Config{
 		Log:            cfg.Log,
+		Enable:         cfg.Enable,
 		ServiceName:    serviceName,
 		TemplateString: templateString,
 		Data:           c,
@@ -42,12 +43,6 @@ func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (change
 	})
 	if err != nil {
 		return false, err
-	}
-
-	if cfg.Enable {
-		if err := systemd_renderer.Enable(ctx, cfg.Log, serviceName); err != nil {
-			return changed, err
-		}
 	}
 
 	return r.Render(ctx, serviceUnitPath, cfg.Reload)
