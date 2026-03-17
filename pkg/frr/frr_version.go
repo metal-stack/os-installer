@@ -48,7 +48,7 @@ func parseVersion(log *slog.Logger, vtyshOutput string) (*semver.Version, error)
 			continue
 		}
 
-		version, found := strings.CutSuffix(dirtyVersion, ").")
+		version, _, found := strings.Cut(dirtyVersion, ").")
 		if !found {
 			continue
 		}
