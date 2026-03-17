@@ -85,11 +85,11 @@ func (r *systemdRenderer) Render(ctx context.Context, destFile string, reload bo
 func Reload(ctx context.Context, log *slog.Logger, unitName string) error {
 	const done = "done"
 
-	log.Info("reloading systemd service unit")
+	log.Info("reloading systemd service unit", "unit", unitName)
 
 	dbc, err := dbus.NewWithContext(ctx)
 	if err != nil {
-		return fmt.Errorf("unable to connect to dbus: %w", err)
+		return fmt.Errorf("unable to connect to dbus to reload unit:%s %w", unitName, err)
 	}
 	defer dbc.Close()
 
@@ -102,7 +102,7 @@ func Reload(ctx context.Context, log *slog.Logger, unitName string) error {
 	job := <-c
 
 	if job != done {
-		return fmt.Errorf("reloading failed: %s", job)
+		return fmt.Errorf("reloading of unit:%s failed: %s", unitName, job)
 	}
 
 	return nil
