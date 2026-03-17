@@ -13,7 +13,7 @@ validate () {
         --build-arg FRR_VERSION="${3}" \
         --build-arg FRR_APT_CHANNEL="${4}" \
         --file Dockerfile.validate \
-        . -t metal-networker-validate:${tag}
+        . -t os-installer:${tag}
 
     docker run --interactive \
         --rm \
@@ -22,7 +22,7 @@ validate () {
         --cap-add=NET_RAW \
         --name vali \
         --volume ./pkg:/testdata:ro \
-        metal-networker-validate:${tag} /validate_os.sh
+        os-installer:${tag} /validate_os.sh
 }
 
 validate "ubuntu" "24.04" "frr-10.4" "noble"

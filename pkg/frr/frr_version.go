@@ -16,25 +16,42 @@ func DetectVersion() (*semver.Version, error) {
 
 	// $ vtysh -c "show version"|grep FRRouting
 	// FRRouting 10.2.1 (shoot--pz9cjf--mwen-fel-firewall-dcedd) on Linux(6.6.60-060660-generic).
-	c := exec.Command(vtysh, "-c", "show version")
+
+	// $ vtysh -h
+	// Usage : vtysh [OPTION...]
+	// Integrated shell for FRR (version 10.4.3).
+
+	// Usage : vtysh [OPTION...]
+	// Integrated shell for FRR (version 8.4.4).
+
+	c := exec.Command(vtysh, "-h")
 	out, err := c.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("unable to detect frr version with vtysh output:%s error: %w", string(out), err)
 	}
 
+	return parseVersion(string(out))
+}
+
+func parseVersion(vtyshOutput string) (*semver.Version, error) {
 	var frrVersion string
 
-	for line := range strings.SplitSeq(string(out), "\n") {
-		if !strings.Contains(line, "FRRouting") {
+	for line := range strings.SplitSeq(vtyshOutput, "\n") {
+		if !strings.Contains(line, "Integrated shell for FRR") {
 			continue
 		}
 
-		fields := strings.Fields(line)
-		if len(fields) < 2 {
+		_, dirtyVersion, found := strings.Cut(line, "(version ")
+		if !found {
 			continue
 		}
 
-		frrVersion = fields[1]
+		version, found := strings.CutSuffix(dirtyVersion, ").")
+		if !found {
+			continue
+		}
+
+		frrVersion = version
 		break
 	}
 
