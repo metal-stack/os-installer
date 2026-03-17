@@ -2,13 +2,14 @@ package frr
 
 import (
 	"fmt"
+	"log/slog"
 	"os/exec"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
 )
 
-func DetectVersion() (*semver.Version, error) {
+func DetectVersion(log *slog.Logger) (*semver.Version, error) {
 	vtysh, err := exec.LookPath("vtysh")
 	if err != nil {
 		return nil, fmt.Errorf("unable to detect path to vtysh: %w", err)
@@ -30,12 +31,13 @@ func DetectVersion() (*semver.Version, error) {
 		return nil, fmt.Errorf("unable to detect frr version with vtysh output:%s error: %w", string(out), err)
 	}
 
-	return parseVersion(string(out))
+	return parseVersion(log, string(out))
 }
 
-func parseVersion(vtyshOutput string) (*semver.Version, error) {
+func parseVersion(log *slog.Logger, vtyshOutput string) (*semver.Version, error) {
 	var frrVersion string
 
+	log.Info("parseVersion", "vtysh output", vtyshOutput)
 	for line := range strings.SplitSeq(vtyshOutput, "\n") {
 		if !strings.Contains(line, "Integrated shell for FRR") {
 			continue

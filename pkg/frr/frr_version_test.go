@@ -1,6 +1,7 @@
 package frr
 
 import (
+	"log/slog"
 	"testing"
 
 	"github.com/Masterminds/semver/v3"
@@ -49,7 +50,7 @@ Configured with:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseVersion(tt.cmdoutput)
+			got, err := parseVersion(slog.Default(), tt.cmdoutput)
 			if diff := cmp.Diff(tt.wantErr, err, test.ErrorStringComparer()); diff != "" {
 				t.Errorf("error diff (+got -want):\n%s", diff)
 			}

@@ -208,7 +208,7 @@ func assembleVRFs(cfg *Config) ([]vrf, error) {
 	)
 
 	if cfg.FRRVersion == nil {
-		frrVersion, err := DetectVersion()
+		frrVersion, err := DetectVersion(cfg.Log)
 		if err != nil {
 			return nil, fmt.Errorf("unable to detect frr version: %w", err)
 		}
