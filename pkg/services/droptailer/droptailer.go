@@ -43,5 +43,11 @@ func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (change
 		return false, err
 	}
 
+	if cfg.Enable {
+		if err := systemd_renderer.Enable(ctx, cfg.Log, serviceName); err != nil {
+			return changed, err
+		}
+	}
+
 	return r.Render(ctx, serviceUnitPath, cfg.Reload)
 }

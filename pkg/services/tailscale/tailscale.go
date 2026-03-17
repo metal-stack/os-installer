@@ -80,6 +80,12 @@ func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (change
 			return chg, err
 		}
 
+		if cfg.Enable {
+			if err := systemd_renderer.Enable(ctx, cfg.Log, spec.serviceName); err != nil {
+				return changed, err
+			}
+		}
+
 		// return changed if one has changed
 		changed = changed || chg
 	}
