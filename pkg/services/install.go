@@ -50,7 +50,7 @@ func WriteSystemdServices(ctx context.Context, log *slog.Logger, network *networ
 	// Chrony
 	if _, err = chrony.WriteSystemdUnit(ctx, &chrony.Config{
 		Log:              log,
-		Enable:           false,
+		Enable:           true,
 		Reload:           false,
 		ChronyConfigPath: "",
 	}, &chrony.TemplateData{

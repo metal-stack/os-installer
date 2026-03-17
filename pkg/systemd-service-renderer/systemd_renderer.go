@@ -121,7 +121,8 @@ func Enable(ctx context.Context, log *slog.Logger, unitName string) error {
 		Timeout: 10 * time.Second,
 	})
 	if err != nil {
-		return fmt.Errorf("unable to enable systemd unit:%s output:%s error:%w", unitName, out, err)
+		// Do not error out because some service can be enabled, but the enable command returns an error.
+		log.Error("unable to enable systemd unit", "unit", unitName, "output", out, "error", err)
 	}
 	return nil
 }
