@@ -113,12 +113,12 @@ func Enable(ctx context.Context, log *slog.Logger, unitName string) error {
 
 	dbc, err := dbus.NewWithContext(ctx)
 	if err != nil {
-		return fmt.Errorf("unable to connect to dbus: %w", err)
+		return fmt.Errorf("unable to connect to dbus to enable unit:%s %w", unitName, err)
 	}
 	defer dbc.Close()
 
 	if _, _, err = dbc.EnableUnitFilesContext(ctx, []string{unitName}, false, false); err != nil {
-		return fmt.Errorf("unable to enable systemd unit: %w", err)
+		return fmt.Errorf("unable to enable systemd unit: %s %w", unitName, err)
 	}
 
 	return nil

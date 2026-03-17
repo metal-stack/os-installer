@@ -21,6 +21,7 @@ var (
 
 type Config struct {
 	Log    *slog.Logger
+	Enable bool
 	Reload bool
 	fs     afero.Fs
 }
