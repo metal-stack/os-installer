@@ -38,7 +38,7 @@ func WriteSystemdServices(ctx context.Context, log *slog.Logger, network *networ
 	// Droptailer
 	if _, err = droptailer.WriteSystemdUnit(ctx, &droptailer.Config{
 		Log:    log,
-		Enable: false,
+		Enable: true,
 		Reload: false,
 	}, &droptailer.TemplateData{
 		Comment:   "created from os-installer",
@@ -50,7 +50,7 @@ func WriteSystemdServices(ctx context.Context, log *slog.Logger, network *networ
 	// Chrony
 	if _, err = chrony.WriteSystemdUnit(ctx, &chrony.Config{
 		Log:              log,
-		Enable:           false,
+		Enable:           true,
 		Reload:           false,
 		ChronyConfigPath: "",
 	}, &chrony.TemplateData{
@@ -62,7 +62,7 @@ func WriteSystemdServices(ctx context.Context, log *slog.Logger, network *networ
 	// firewall-controller
 	if _, err = firewallcontroller.WriteSystemdUnit(ctx, &firewallcontroller.Config{
 		Log:    log,
-		Enable: false,
+		Enable: true,
 		Reload: false,
 	}, &firewallcontroller.TemplateData{
 		Comment:         "created from os-installer",
@@ -74,7 +74,7 @@ func WriteSystemdServices(ctx context.Context, log *slog.Logger, network *networ
 	// nftables-exporter
 	if _, err := nftablesexporter.WriteSystemdUnit(ctx, &nftablesexporter.Config{
 		Log:    log,
-		Enable: false,
+		Enable: true,
 		Reload: false,
 	}, &nftablesexporter.TemplateData{
 		Comment: "created from os-installer",
@@ -85,7 +85,7 @@ func WriteSystemdServices(ctx context.Context, log *slog.Logger, network *networ
 	// node-exporter
 	if _, err := nodeexporter.WriteSystemdUnit(ctx, &nodeexporter.Config{
 		Log:    log,
-		Enable: false,
+		Enable: true,
 		Reload: false,
 	}, &nodeexporter.TemplateData{
 		Comment: "created from os-installer",
@@ -96,7 +96,7 @@ func WriteSystemdServices(ctx context.Context, log *slog.Logger, network *networ
 	// suricata
 	if _, err := suricata.WriteSystemdUnit(ctx, &suricata.Config{
 		Log:    log,
-		Enable: false,
+		Enable: true,
 		Reload: false,
 	}, &suricata.TemplateData{
 		Interface:       "TODO",
@@ -110,7 +110,7 @@ func WriteSystemdServices(ctx context.Context, log *slog.Logger, network *networ
 		vpn := network.Vpn()
 		if _, err := tailscale.WriteSystemdUnit(ctx, &tailscale.Config{
 			Log:    log,
-			Enable: false,
+			Enable: true,
 			Reload: false,
 		}, &tailscale.TemplateData{
 			Comment:         "created from os-installer",

@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/coreos/go-systemd/v22/dbus"
+	"github.com/metal-stack/os-installer/pkg/exec"
 	renderer "github.com/metal-stack/os-installer/pkg/template-renderer"
 	"github.com/spf13/afero"
 )
@@ -111,15 +113,15 @@ func Reload(ctx context.Context, log *slog.Logger, unitName string) error {
 func Enable(ctx context.Context, log *slog.Logger, unitName string) error {
 	log.Info("enable systemd service unit", "unit-name", unitName)
 
-	dbc, err := dbus.NewWithContext(ctx)
+	ex := exec.New(log)
+
+	out, err := ex.Execute(ctx, &exec.Params{
+		Name:    "systemctl",
+		Args:    []string{"enable", unitName},
+		Timeout: 10 * time.Second,
+	})
 	if err != nil {
-		return fmt.Errorf("unable to connect to dbus to enable unit:%s %w", unitName, err)
+		return fmt.Errorf("unable to enable systemd unit:%s output:%s error:%w", unitName, out, err)
 	}
-	defer dbc.Close()
-
-	if _, _, err = dbc.EnableUnitFilesContext(ctx, []string{unitName}, false, false); err != nil {
-		return fmt.Errorf("unable to enable systemd unit: %s %w", unitName, err)
-	}
-
 	return nil
 }
