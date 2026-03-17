@@ -50,7 +50,7 @@ func Test_os_WriteBootInfo(t *testing.T) {
 				require.NoError(t, fs.WriteFile("/boot/initrd.img-1.2.3", nil, 0700))
 			},
 			want:    nil,
-			wantErr: fmt.Errorf("more or less than a single System.map found ([/boot/System.map-1.2.3 /boot/System.map-1.2.4]), probably no kernel or more than one kernel installed"),
+			wantErr: fmt.Errorf("no single System.map found ([/boot/System.map-1.2.3 /boot/System.map-1.2.4]), probably no kernel or more than one kernel installed"),
 		},
 		{
 			name:    "no system.map present",
@@ -60,7 +60,7 @@ func Test_os_WriteBootInfo(t *testing.T) {
 				require.NoError(t, fs.WriteFile("/boot/initrd.img-1.2.3", nil, 0700))
 			},
 			want:    nil,
-			wantErr: fmt.Errorf("more or less than a single System.map found ([]), probably no kernel or more than one kernel installed"),
+			wantErr: fmt.Errorf("no single System.map found ([]), probably no kernel or more than one kernel installed"),
 		},
 		{
 			name:    "no vmlinuz present",
