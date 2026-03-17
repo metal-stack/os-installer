@@ -147,7 +147,7 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 			if !cfg.Validate {
 				return nil
 			}
-			return validate(cfg)
+			return validate(cfg, path)
 		},
 	})
 	if err != nil {
@@ -158,8 +158,6 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 	if err != nil {
 		return changed, err
 	}
-
-	// FIXME validate generated rule file before reloading
 
 	if cfg.Reload && changed {
 		if err := systemd_renderer.Reload(ctx, cfg.Log, serviceName); err != nil {
@@ -385,10 +383,10 @@ func getAddressFamily(p string) (string, error) {
 }
 
 // validate validates network interfaces configuration.
-func validate(cfg *Config) error {
-	cfg.Log.Info("running 'nft --check --file' to validate changes.", "file", nftrulesPath)
+func validate(cfg *Config, path string) error {
+	cfg.Log.Info("running 'nft --check --file' to validate changes.", "file", path)
 
-	cmd := exec.Command("nft", "--check", "--file", nftrulesPath)
+	cmd := exec.Command("nft", "--check", "--file", path)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		cfg.Log.Error("nft validation failed", "output", string(out), "error", err)

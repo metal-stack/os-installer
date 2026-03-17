@@ -152,7 +152,7 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 				return nil
 			}
 
-			return validate(frrConfigPath)
+			return validate(path)
 		},
 	})
 	if err != nil {
