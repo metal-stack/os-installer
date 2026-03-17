@@ -4,7 +4,7 @@ set -e
 
 validate () {
     echo "----------------------------------------------------------------"
-    echo "Validating sample artifacts of metal-networker with ${1}:${2} frr:${3}"
+    echo "Validating sample artifacts of os-installer with ${1}:${2} frr:${3}"
     echo "----------------------------------------------------------------"
     tag="${1}_${2}_${3}"
     docker build \
