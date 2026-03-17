@@ -116,8 +116,8 @@ func Enable(ctx context.Context, log *slog.Logger, unitName string) error {
 	ex := exec.New(log)
 
 	out, err := ex.Execute(ctx, &exec.Params{
-		Name:    "systemctl",
-		Args:    []string{"enable", unitName},
+		Name:    "bash",
+		Args:    []string{"-c", fmt.Sprintf("systemctl enable %s", unitName)},
 		Timeout: 10 * time.Second,
 	})
 	if err != nil {
