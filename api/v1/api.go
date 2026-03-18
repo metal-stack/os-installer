@@ -8,7 +8,6 @@ const (
 	MachineDetailsPath    = "/etc/metal/machine-details.yaml"
 	MachineAllocationPath = "/etc/metal/machine-allocation.yaml"
 	InstallerConfigPath   = "/etc/metal/os-installer.yaml"
-	LLDPDConfigPath       = "/etc/metal/install.yaml"
 	BuildMetaPath         = "/etc/metal/build-meta.yaml"
 	BootInfoPath          = "/etc/metal/boot-info.yaml"
 )
@@ -57,16 +56,6 @@ type (
 		RaidEnabled bool `yaml:"raidenabled"`
 		// RootUUID is the fs uuid if the root fs
 		RootUUID string `yaml:"root_uuid"`
-	}
-
-	// LLDPDConfig contains the configuration which is required for the lldpd to start.
-	// must be stored in yaml format at /etc/metal/install.yaml
-	// Is written by by the metal-hammer
-	LLDPDConfig struct {
-		// MachineUUID is the unique UUID for this machine, usually the board serial.
-		MachineUUID string `yaml:"machineuuid"`
-		// Timestamp is the the timestamp of installer config creation.
-		Timestamp string `yaml:"timestamp"`
 	}
 
 	// BuildMeta is written after the installation finished to store details about the installation version.

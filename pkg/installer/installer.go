@@ -48,7 +48,7 @@ func (i *installer) PersistConfigurations() error {
 	if err != nil {
 		return fmt.Errorf("unable to marshal machine details: %w", err)
 	}
-	err = os.WriteFile(v1.MachineDetailsPath, detailsBytes, os.ModePerm)
+	err = i.fs.WriteFile(v1.MachineDetailsPath, detailsBytes, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("unable to persist machine details: %w", err)
 	}
@@ -57,7 +57,7 @@ func (i *installer) PersistConfigurations() error {
 	if err != nil {
 		return fmt.Errorf("unable to marshal machine allocation: %w", err)
 	}
-	err = os.WriteFile(v1.MachineAllocationPath, allocationBytes, os.ModePerm)
+	err = i.fs.WriteFile(v1.MachineAllocationPath, allocationBytes, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("unable to persist machine allocation: %w", err)
 	}
