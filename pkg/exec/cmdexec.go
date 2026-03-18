@@ -10,10 +10,6 @@ import (
 	"time"
 )
 
-const (
-	defaultExecDir = "/etc/metal"
-)
-
 type CmdExecutor struct {
 	log *slog.Logger
 	c   func(ctx context.Context, name string, arg ...string) *exec.Cmd
@@ -55,10 +51,6 @@ func (i *CmdExecutor) Execute(ctx context.Context, p *Params) (out string, err e
 	}
 
 	cmd := i.c(ctx, p.Name, p.Args...)
-	if p.Dir != "" {
-		cmd.Dir = defaultExecDir
-	}
-
 	cmd.Env = append(cmd.Env, p.Env...)
 
 	// show stderr

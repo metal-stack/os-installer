@@ -66,6 +66,7 @@ func (d *CommonTasks) ProcessUserdata(ctx context.Context) error {
 	_, err = d.exec.Execute(ctx, &exec.Params{
 		Name: "ignition",
 		Args: []string{"-oem", "file", "-stage", "files", "-log-to-stdout"},
+		Dir:  "/etc/metal",
 	})
 	if err != nil {
 		d.log.Error("error when running ignition, continuing anyway", "report", report.Entries, "error", err)
