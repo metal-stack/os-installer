@@ -52,7 +52,6 @@ type (
 
 		Network *network.Network
 
-		// FIXME validator net.Validator,
 		EnableDNSProxy bool
 		ForwardPolicy  ForwardPolicy
 
