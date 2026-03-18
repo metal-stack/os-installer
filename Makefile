@@ -26,7 +26,7 @@ binary:
 
 .PHONY: test
 test:
-	GO_ENV=testing go test -race -cover ./...
+	GO_ENV=testing go test ./... -race -coverpkg=./... -coverprofile=coverage.out -covermode=atomic && go tool cover -func=coverage.out
 
 
 .PHONY: validate
