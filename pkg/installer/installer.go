@@ -181,6 +181,10 @@ func (i *installer) run(ctx context.Context) error {
 			fn:   i.oss.FixPermissions,
 		},
 		{
+			name: "process userdata",
+			fn:   i.oss.ProcessUserdata,
+		},
+		{
 			name: "build kernel cmdline",
 			fn: func(ctx context.Context) error {
 				l, err := i.oss.BuildCMDLine(ctx)
