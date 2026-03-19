@@ -38,7 +38,7 @@ func (d *CommonTasks) BuildCMDLine(ctx context.Context) (string, error) {
 }
 
 func (d *CommonTasks) findMDUUID(ctx context.Context) (mdUUID string, found bool, err error) {
-	d.log.Info("detect software raid uuid")
+	d.log.Debug("detect software raid uuid")
 
 	if !d.details.RaidEnabled {
 		return "", false, nil

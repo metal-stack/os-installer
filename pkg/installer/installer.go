@@ -122,7 +122,7 @@ func (i *installer) Install(ctx context.Context) error {
 	i.oss = oss
 
 	if err = i.run(ctx); err != nil {
-		i.log.Info("running os installer failed", "took", time.Since(start).String())
+		i.log.Error("running os installer failed", "took", time.Since(start).String())
 		return fmt.Errorf("os installer failed: %w", err)
 	}
 
@@ -232,12 +232,12 @@ func (i *installer) run(ctx context.Context) error {
 		)
 
 		if len(i.cfg.Only) > 0 && !slices.Contains(i.cfg.Only, task.name) {
-			log.Info("skipping task as defined by installer configuration")
+			log.Warn("skipping task as defined by installer configuration")
 			continue
 		}
 
 		if slices.Contains(i.cfg.Except, task.name) {
-			log.Info("skipping task as defined by installer configuration")
+			log.Warn("skipping task as defined by installer configuration")
 			continue
 		}
 

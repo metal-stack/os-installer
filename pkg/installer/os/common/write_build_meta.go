@@ -11,7 +11,7 @@ import (
 )
 
 func (d *CommonTasks) WriteBuildMeta(ctx context.Context) error {
-	d.log.Info("writing build meta file", "path", v1.BuildMetaPath)
+	d.log.Debug("writing build meta file", "path", v1.BuildMetaPath)
 
 	meta := &v1.BuildMeta{
 		Version:  v.Version,

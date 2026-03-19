@@ -62,7 +62,7 @@ func New(cfg *oscommon.Config) (oscommon.OperatingSystem, error) {
 }
 
 func detectOS(cfg *oscommon.Config) (oscommon.OperatingSystem, error) {
-	cfg.Log.Info("automatically detecting operating system for installation")
+	cfg.Log.Debug("automatically detecting operating system for installation")
 
 	content, err := cfg.Fs.ReadFile(OsReleasePath)
 	if err != nil {

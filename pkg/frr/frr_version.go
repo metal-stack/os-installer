@@ -37,7 +37,7 @@ func DetectVersion(log *slog.Logger) (*semver.Version, error) {
 func parseVersion(log *slog.Logger, vtyshOutput string) (*semver.Version, error) {
 	var frrVersion string
 
-	log.Info("parseVersion", "vtysh output", vtyshOutput)
+	log.Debug("parseVersion", "vtysh output", vtyshOutput)
 	for line := range strings.SplitSeq(vtyshOutput, "\n") {
 		if !strings.Contains(line, "Integrated shell for FRR") {
 			continue

@@ -42,7 +42,7 @@ func (i *CmdExecutor) Execute(ctx context.Context, p *Params) (out string, err e
 		start  = time.Now()
 		output []byte
 	)
-	i.log.Info("running command", "command", strings.Join(append([]string{p.Name}, p.Args...), " "), "start", start.String())
+	i.log.Debug("running command", "command", strings.Join(append([]string{p.Name}, p.Args...), " "), "start", start.String())
 
 	if p.Timeout != 0 {
 		var cancel context.CancelFunc

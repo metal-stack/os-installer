@@ -24,7 +24,7 @@ func (d *CommonTasks) CreateMetalUser(ctx context.Context, sudoGroup string) err
 	}
 
 	if u != nil {
-		d.log.Info("user already exists, recreating")
+		d.log.Debug("user already exists, recreating")
 
 		_, err = d.exec.Execute(ctx, &exec.Params{
 			Name:    "userdel",

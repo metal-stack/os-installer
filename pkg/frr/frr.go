@@ -100,7 +100,7 @@ type (
 
 // Renders renders frr configuration according to the given input data and reloads the service if necessary
 func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
-	cfg.Log.Info("render frr configuration")
+	cfg.Log.Debug("render frr configuration")
 	var (
 		data     any
 		template string
@@ -139,8 +139,6 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 		}
 		template = firewallTemplateString
 	}
-
-	cfg.Log.Info("render frr configuration", "templatedata", data)
 
 	r, err := renderer.New(&renderer.Config{
 		Log:            cfg.Log,
