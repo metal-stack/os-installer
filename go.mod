@@ -10,7 +10,7 @@ require (
 	github.com/flatcar/ignition v0.36.2
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
-	github.com/metal-stack/api v0.0.55-0.20260316085710-1f98c8226b9e
+	github.com/metal-stack/api v0.0.56
 	github.com/metal-stack/v v1.0.3
 	github.com/samber/lo v1.53.0
 	github.com/spf13/afero v1.15.0
