@@ -159,11 +159,11 @@ func (i *importRule) prefixLists() []ipPrefixList {
 	)
 
 	for _, af := range afs {
-		pfxList := prefixLists(i.ImportPrefixesNoExport, &af, false, seed, i.TargetVRF)
+		pfxList := prefixLists(i.ImportPrefixesNoExport, af, false, seed, i.TargetVRF)
 		result = append(result, pfxList...)
 
 		seed = ipPrefixListSeqSeed + len(result)
-		result = append(result, prefixLists(i.ImportPrefixes, &af, true, seed, i.TargetVRF)...)
+		result = append(result, prefixLists(i.ImportPrefixes, af, true, seed, i.TargetVRF)...)
 	}
 
 	return result
@@ -171,24 +171,24 @@ func (i *importRule) prefixLists() []ipPrefixList {
 
 func prefixLists(
 	prefixes []importPrefix,
-	af *apiv2.NetworkAddressFamily,
+	af apiv2.NetworkAddressFamily,
 	isExported bool,
 	seed int,
 	vrf string,
 ) []ipPrefixList {
 	afString := "ip"
-	if *af == apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V6 {
+	if af == apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V6 {
 		afString = "ipv6"
 	}
 
 	var result []ipPrefixList
 
 	for _, p := range prefixes {
-		if *af == apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V4 && !p.Prefix.Addr().Is4() {
+		if af == apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V4 && !p.Prefix.Addr().Is4() {
 			continue
 		}
 
-		if *af == apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V6 && !p.Prefix.Addr().Is6() {
+		if af == apiv2.NetworkAddressFamily_NETWORK_ADDRESS_FAMILY_V6 && !p.Prefix.Addr().Is6() {
 			continue
 		}
 
