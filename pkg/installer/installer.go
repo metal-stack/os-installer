@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 	"slices"
 	"time"
 
-	"buf.build/go/protoyaml"
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	v1 "github.com/metal-stack/os-installer/api/v1"
 	"github.com/metal-stack/os-installer/pkg/exec"
@@ -41,51 +39,6 @@ func New(log *slog.Logger, details *v1.MachineDetails, allocation *apiv2.Machine
 		allocation: allocation,
 		exec:       exec.New(log),
 	}
-}
-
-func (i *installer) PersistConfigurations() error {
-	detailsBytes, err := yaml.Marshal(i.details)
-	if err != nil {
-		return fmt.Errorf("unable to marshal machine details: %w", err)
-	}
-	err = i.fs.WriteFile(v1.MachineDetailsPath, detailsBytes, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("unable to persist machine details: %w", err)
-	}
-
-	allocationBytes, err := protoyaml.Marshal(i.allocation)
-	if err != nil {
-		return fmt.Errorf("unable to marshal machine allocation: %w", err)
-	}
-	err = i.fs.WriteFile(v1.MachineAllocationPath, allocationBytes, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("unable to persist machine allocation: %w", err)
-	}
-	return nil
-}
-
-func ReadConfigurations() (*v1.MachineDetails, *apiv2.MachineAllocation, error) {
-	data, err := os.ReadFile(v1.MachineDetailsPath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read machine details: %w", err)
-	}
-
-	var details v1.MachineDetails
-	if err = yaml.Unmarshal(data, &details); err != nil {
-		return nil, nil, fmt.Errorf("unable to parse machine details: %w", err)
-	}
-
-	data, err = os.ReadFile(v1.MachineAllocationPath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read machine allocation: %w", err)
-	}
-
-	var allocation apiv2.MachineAllocation
-	if err = protoyaml.Unmarshal(data, &allocation); err != nil {
-		return nil, nil, fmt.Errorf("unable to parse machine allocation: %w", err)
-	}
-
-	return &details, &allocation, nil
 }
 
 func (i *installer) Install(ctx context.Context) error {
@@ -140,6 +93,10 @@ func (i *installer) run(ctx context.Context) error {
 		name string
 		fn   func(ctx context.Context) error
 	}{
+		{
+			name: "persist configuration data from metal-hammer",
+			fn:   i.persistConfigurations,
+		},
 		{
 			name: "check if running in efi mode",
 			fn:   i.validateRunningInEfiMode,
