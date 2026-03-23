@@ -4,14 +4,20 @@ import (
 	"context"
 	"fmt"
 	"strings"
+
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 )
 
 const (
 	TimesyncdConfigPath = "/etc/systemd/timesyncd.conf"
-	ChronyConfigPath    = "/etc/chrony/chrony.conf"
 )
 
 func (d *CommonTasks) WriteNTPConf(ctx context.Context) error {
+	if d.allocation.AllocationType == apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL {
+		d.log.Info("skipping timesyncd config for firewalls as chrony will be configured later on through systemd service renderer")
+		return nil
+	}
+
 	if len(d.allocation.NtpServers) == 0 {
 		return nil
 	}

@@ -18,7 +18,7 @@ const (
 
 var (
 	//go:embed chrony.conf.tpl
-	chronyConfigTemplateString string
+	ChronyConfigTemplateString string
 )
 
 type Config struct {
@@ -39,7 +39,7 @@ func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData, vrfName
 
 	r, err := renderer.New(&renderer.Config{
 		Log:            cfg.Log,
-		TemplateString: chronyConfigTemplateString,
+		TemplateString: ChronyConfigTemplateString,
 		Data:           c,
 		Fs:             cfg.fs,
 	})

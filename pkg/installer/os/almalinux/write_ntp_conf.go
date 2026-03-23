@@ -5,13 +5,19 @@ import (
 	"fmt"
 
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
+	"github.com/metal-stack/os-installer/pkg/services/chrony"
+	renderer "github.com/metal-stack/os-installer/pkg/template-renderer"
 )
 
 const (
-	chronyConfigPath = "/etc/chrony.conf"
+	ChronyConfigPath = "/etc/chrony.conf"
 )
 
 func (o *Os) WriteNTPConf(ctx context.Context) error {
+	if o.allocation.AllocationType == apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL {
+		return fmt.Errorf("almalinux as firewall is currently not supported")
+	}
+
 	if len(o.allocation.NtpServers) == 0 {
 		return nil
 	}
@@ -22,9 +28,18 @@ func (o *Os) WriteNTPConf(ctx context.Context) error {
 		ntpServers = append(ntpServers, ntp.Address)
 	}
 
-	if o.allocation.AllocationType == apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL {
-		return fmt.Errorf("almalinux as firewall is currently not supported")
+	r, err := renderer.New(&renderer.Config{
+		Log:            o.log,
+		TemplateString: chrony.ChronyConfigTemplateString,
+		Data: chrony.TemplateData{
+			NTPServers: ntpServers,
+		},
+		Fs: o.fs,
+	})
+	if err != nil {
+		return err
 	}
 
-	return o.WriteNtpConfToPath(chronyConfigPath, ntpServers)
+	_, err = r.Render(ctx, ChronyConfigPath)
+	return err
 }
