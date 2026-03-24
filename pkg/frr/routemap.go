@@ -3,6 +3,7 @@ package frr
 import (
 	"fmt"
 	"net/netip"
+	"slices"
 	"sort"
 	"strings"
 
@@ -106,7 +107,7 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 	case apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED:
 		// reach out from private shared networks into private primary network
 		i.ImportVRFs = []string{vrfNameOf(privatePrimaryNet)}
-		i.ImportPrefixes = concatPfxSlices(prefixesOfNetwork(privatePrimaryNet, vrfNameOf(privatePrimaryNet)), prefixesOfNetwork(network, vrfNameOf(privatePrimaryNet)))
+		i.ImportPrefixes = slices.Concat(prefixesOfNetwork(privatePrimaryNet, vrfNameOf(privatePrimaryNet)), prefixesOfNetwork(network, vrfNameOf(privatePrimaryNet)))
 
 		// import destination prefixes of dmz networks from external networks
 		if len(network.DestinationPrefixes) > 0 {
@@ -214,18 +215,10 @@ func prefixLists(
 	return result
 }
 
-func concatPfxSlices(pfxSlices ...[]importPrefix) []importPrefix {
-	res := []importPrefix{}
-	for _, pfxSlice := range pfxSlices {
-		res = append(res, pfxSlice...)
-	}
-	return res
-}
-
-func stringSliceToIPPrefix(s []string, sourceVrf string) []importPrefix {
+func convertToImportPrefixes(prefixes []string, sourceVrf string) []importPrefix {
 	var result []importPrefix
-	for _, e := range s {
-		ipp, err := netip.ParsePrefix(e)
+	for _, prefix := range prefixes {
+		ipp, err := netip.ParsePrefix(prefix)
 		if err != nil {
 			continue
 		}
@@ -241,7 +234,7 @@ func stringSliceToIPPrefix(s []string, sourceVrf string) []importPrefix {
 func getDestinationPrefixes(networks []*apiv2.MachineNetwork) []importPrefix {
 	var result []importPrefix
 	for _, network := range networks {
-		result = append(result, stringSliceToIPPrefix(network.DestinationPrefixes, vrfNameOf(network))...)
+		result = append(result, convertToImportPrefixes(network.DestinationPrefixes, vrfNameOf(network))...)
 	}
 	return result
 }
@@ -255,7 +248,7 @@ func prefixesOfNetworks(networks []*apiv2.MachineNetwork) []importPrefix {
 }
 
 func prefixesOfNetwork(network *apiv2.MachineNetwork, sourceVrf string) []importPrefix {
-	return stringSliceToIPPrefix(network.Prefixes, sourceVrf)
+	return convertToImportPrefixes(network.Prefixes, sourceVrf)
 }
 
 func vrfNameOf(n *apiv2.MachineNetwork) string {
@@ -333,18 +326,18 @@ func routeMapName(vrfName string) string {
 }
 
 func (i *importPrefix) buildSpecs(seq int) []string {
-	var result []string
-	var spec string
+	var (
+		result []string
+		spec   string
+	)
 
 	if i.Prefix.Bits() == 0 {
 		spec = fmt.Sprintf("%s %s", i.Policy, i.Prefix)
-
 	} else {
 		spec = fmt.Sprintf("seq %d %s %s le %d", seq, i.Policy, i.Prefix, i.Prefix.Addr().BitLen())
 	}
 
 	result = append(result, spec)
-
 	return result
 }
 

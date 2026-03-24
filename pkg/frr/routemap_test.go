@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/netip"
+	"slices"
 	"testing"
 
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
@@ -95,10 +96,10 @@ func Test_importRulesForNetwork(t *testing.T) {
 				private.vrf: {
 					// Imported VRFs with their restrictions
 					inet.vrf: importSettings{
-						ImportPrefixes: concatPfxSlices(inet.destinations, []importPrefix{publicDefaultNet}, inet.prefixes),
+						ImportPrefixes: slices.Concat(inet.destinations, []importPrefix{publicDefaultNet}, inet.prefixes),
 					},
 					external.vrf: importSettings{
-						ImportPrefixes: concatPfxSlices(external.destinations, external.prefixes),
+						ImportPrefixes: slices.Concat(external.destinations, external.prefixes),
 					},
 					shared.vrf: importSettings{
 						ImportPrefixes: shared.prefixes,
@@ -106,7 +107,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 				},
 				shared.vrf: {
 					private.vrf: importSettings{
-						ImportPrefixes: concatPfxSlices(private.prefixes, leakFrom(shared.prefixes, private.vrf)),
+						ImportPrefixes: slices.Concat(private.prefixes, leakFrom(shared.prefixes, private.vrf)),
 					},
 				},
 				inet.vrf: {
@@ -129,7 +130,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 			want: map[string]map[string]importSettings{
 				shared.vrf: {
 					inet.vrf: importSettings{
-						ImportPrefixes: concatPfxSlices(inet.destinations, []importPrefix{publicDefaultNet}, inet.prefixes),
+						ImportPrefixes: slices.Concat(inet.destinations, []importPrefix{publicDefaultNet}, inet.prefixes),
 					},
 				},
 				inet.vrf: {
@@ -146,10 +147,10 @@ func Test_importRulesForNetwork(t *testing.T) {
 			want: map[string]map[string]importSettings{
 				private6.vrf: {
 					inet6.vrf: importSettings{
-						ImportPrefixes: concatPfxSlices(inet6.destinations, []importPrefix{publicDefaultNetIPv6}, inet6.prefixes),
+						ImportPrefixes: slices.Concat(inet6.destinations, []importPrefix{publicDefaultNetIPv6}, inet6.prefixes),
 					},
 					external.vrf: importSettings{
-						ImportPrefixes: concatPfxSlices(external.destinations, external.prefixes),
+						ImportPrefixes: slices.Concat(external.destinations, external.prefixes),
 					},
 					shared.vrf: importSettings{
 						ImportPrefixes: shared.prefixes,
@@ -157,7 +158,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 				},
 				shared.vrf: {
 					private6.vrf: importSettings{
-						ImportPrefixes: concatPfxSlices(private6.prefixes, leakFrom(shared.prefixes, private6.vrf)),
+						ImportPrefixes: slices.Concat(private6.prefixes, leakFrom(shared.prefixes, private6.vrf)),
 					},
 				},
 				inet6.vrf: {
@@ -180,10 +181,10 @@ func Test_importRulesForNetwork(t *testing.T) {
 			want: map[string]map[string]importSettings{
 				private6.vrf: {
 					inet6.vrf: importSettings{
-						ImportPrefixes: concatPfxSlices(inet6.destinations, []importPrefix{publicDefaultNetIPv6, publicDefaultNet}, dualstack.prefixes),
+						ImportPrefixes: slices.Concat(inet6.destinations, []importPrefix{publicDefaultNetIPv6, publicDefaultNet}, dualstack.prefixes),
 					},
 					external.vrf: importSettings{
-						ImportPrefixes: concatPfxSlices(external.destinations, external.prefixes),
+						ImportPrefixes: slices.Concat(external.destinations, external.prefixes),
 					},
 					shared.vrf: importSettings{
 						ImportPrefixes: shared.prefixes,
@@ -191,7 +192,7 @@ func Test_importRulesForNetwork(t *testing.T) {
 				},
 				shared.vrf: {
 					private6.vrf: importSettings{
-						ImportPrefixes: concatPfxSlices(private6.prefixes, leakFrom(shared.prefixes, private6.vrf)),
+						ImportPrefixes: slices.Concat(private6.prefixes, leakFrom(shared.prefixes, private6.vrf)),
 					},
 				},
 				inet6.vrf: {
