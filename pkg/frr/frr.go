@@ -84,11 +84,12 @@ type (
 		// SourceVRF specifies from which VRF the given prefix list should be imported
 		SourceVRF string
 	}
+
 	// routeMap represents a route-map to permit or deny routes.
 	routeMap struct {
 		Name    string
 		Entries []string
-		Policy  string
+		Policy  accessPolicy
 		Order   int
 	}
 

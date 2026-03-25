@@ -80,17 +80,17 @@ func importRulesForNetwork(cfg *Config, network *apiv2.MachineNetwork) (*importR
 		i.ImportVRFs = append(i.ImportVRFs, vrfNamesOf(privateSecondarySharedNets)...)
 		i.ImportPrefixes = append(i.ImportPrefixes, prefixesOfNetworks(privateSecondarySharedNets)...)
 
-		// reach out from private network to destination prefixes of private secondays shared networks
+		// reach out from private network to destination prefixes of private secondary shared networks
 		for _, n := range privateSecondarySharedNets {
 			for _, pfx := range n.DestinationPrefixes {
 				ppfx := netip.MustParsePrefix(pfx)
-				isThere := false
+				var exists bool
 				for _, i := range i.ImportPrefixes {
 					if i.Prefix == ppfx {
-						isThere = true
+						exists = true
 					}
 				}
-				if !isThere {
+				if !exists {
 					i.ImportPrefixes = append(i.ImportPrefixes, importPrefix{
 						Prefix:    ppfx,
 						Policy:    permit,
@@ -301,7 +301,7 @@ func (i *importRule) routeMaps() []routeMap {
 
 		routeMap := routeMap{
 			Name:    routeMapName(i.TargetVRF),
-			Policy:  string(permit),
+			Policy:  permit,
 			Order:   order,
 			Entries: entries,
 		}
@@ -312,7 +312,7 @@ func (i *importRule) routeMaps() []routeMap {
 
 	routeMap := routeMap{
 		Name:   routeMapName(i.TargetVRF),
-		Policy: string(deny),
+		Policy: deny,
 		Order:  order,
 	}
 
