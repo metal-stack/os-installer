@@ -69,6 +69,7 @@ func (d *CommonTasks) ProcessUserdata(ctx context.Context) error {
 		Dir:  "/",
 	})
 	if err != nil {
+		// if the user provides userdata that does not work out we still want the machine to start up
 		d.log.Error("error when running ignition, continuing anyway", "report", report.Entries, "error", err)
 	}
 
