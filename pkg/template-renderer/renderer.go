@@ -9,6 +9,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"path"
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
@@ -72,9 +73,15 @@ func New(c *Config) (*Renderer, error) {
 func (r *Renderer) Render(ctx context.Context, destFile string) (changed bool, err error) {
 	r.log.Info("rendering template file", "destination", destFile, "data", r.data)
 
-	stagingFile := fmt.Sprintf("%s%s-%s", r.prefix, destFile, uuid.New().String())
+	var (
+		base = path.Base(destFile)
+		dir  = path.Dir(destFile)
 
-	f, err := r.fs.Create(stagingFile)
+		stagingFile     = fmt.Sprintf("%s%s-%s", r.prefix, base, uuid.New().String())
+		stagingFilePath = path.Join(dir, stagingFile)
+	)
+
+	f, err := r.fs.Create(stagingFilePath)
 	if err != nil {
 		return false, err
 	}
@@ -84,7 +91,7 @@ func (r *Renderer) Render(ctx context.Context, destFile string) (changed bool, e
 			r.log.Error("unable to close file", "error", err)
 		}
 
-		if removeErr := r.fs.Remove(stagingFile); removeErr != nil && !os.IsNotExist(removeErr) {
+		if removeErr := r.fs.Remove(stagingFilePath); removeErr != nil && !os.IsNotExist(removeErr) {
 			r.log.Error("unable to remove staging file", "error", removeErr)
 			err = removeErr
 		}
