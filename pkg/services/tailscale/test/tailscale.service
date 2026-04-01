@@ -1,0 +1,13 @@
+[Unit]
+Description=Tailscale client
+After=tailscaled.service
+
+[Service]
+LimitMEMLOCK=infinity
+User=root
+Group=root
+ExecStart=/bin/ip vrf exec vrf104009 /usr/local/bin/tailscale up --hostname c0115b51-5e4d-4f92-85c8-1cc504eafdd2 --auth-key a-authkey --login-server headscale.metal-stack.io
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

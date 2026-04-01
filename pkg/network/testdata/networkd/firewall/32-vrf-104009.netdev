@@ -1,7 +1,0 @@
-# vrf (networkid: internet-vagrant-lab)
-[NetDev]
-Name=vrf104009
-Kind=vrf
-
-[VRF]
-Table=1002

@@ -1,7 +1,0 @@
-# svi (networkid: storage-net)
-[NetDev]
-Name=vlan3982
-Kind=vlan
-
-[VLAN]
-Id=1001
