@@ -9,6 +9,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"path"
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
@@ -24,13 +25,16 @@ type (
 		Data           any
 		// Validate allows the validation of the rendered template on a given temp file path, optional
 		Validate func(path string) error
-		Fs       afero.Fs
+		// An optional prefix when creating tmp files
+		TmpFilePrefix string
+		Fs            afero.Fs
 	}
 
 	Renderer struct {
 		fs         afero.Afero
 		log        *slog.Logger
 		tpl        *template.Template
+		prefix     string
 		data       any
 		validateFn func(path string) error
 	}
@@ -60,6 +64,7 @@ func New(c *Config) (*Renderer, error) {
 		fs: afero.Afero{
 			Fs: fs,
 		},
+		prefix: c.TmpFilePrefix,
 	}, nil
 }
 
@@ -68,9 +73,15 @@ func New(c *Config) (*Renderer, error) {
 func (r *Renderer) Render(ctx context.Context, destFile string) (changed bool, err error) {
 	r.log.Info("rendering template file", "destination", destFile, "data", r.data)
 
-	stagingFile := fmt.Sprintf("%s-%s", destFile, uuid.New().String())
+	var (
+		base = path.Base(destFile)
+		dir  = path.Dir(destFile)
 
-	f, err := r.fs.Create(stagingFile)
+		stagingFile     = fmt.Sprintf("%s%s-%s", r.prefix, base, uuid.New().String())
+		stagingFilePath = path.Join(dir, stagingFile)
+	)
+
+	f, err := r.fs.Create(stagingFilePath)
 	if err != nil {
 		return false, err
 	}
@@ -80,7 +91,7 @@ func (r *Renderer) Render(ctx context.Context, destFile string) (changed bool, e
 			r.log.Error("unable to close file", "error", err)
 		}
 
-		if removeErr := r.fs.Remove(stagingFile); removeErr != nil && !os.IsNotExist(removeErr) {
+		if removeErr := r.fs.Remove(stagingFilePath); removeErr != nil && !os.IsNotExist(removeErr) {
 			r.log.Error("unable to remove staging file", "error", removeErr)
 			err = removeErr
 		}

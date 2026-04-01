@@ -138,8 +138,11 @@ func Render(ctx context.Context, cfg *Config) (changed bool, err error) {
 	r, err := renderer.New(&renderer.Config{
 		Log:            cfg.Log,
 		TemplateString: templateString,
-		Data:           data,
-		Fs:             cfg.fs,
+		// nftables does not interpret files with leading dot,
+		// so temp files that are left due to crashes do not mess with the rules
+		TmpFilePrefix: ".",
+		Data:          data,
+		Fs:            cfg.fs,
 		Validate: func(path string) error {
 			if !cfg.Validate {
 				return nil
