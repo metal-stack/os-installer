@@ -42,8 +42,6 @@ var (
 				Ips:         []string{"10.0.18.2"},
 				Vrf:         3982,
 				Asn:         4200003073,
-				// FIXME clarify if this is required
-				// NatType:     apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
 			},
 			{
 				Network:             "internet",
@@ -97,8 +95,6 @@ var (
 				Ips:         []string{"10.0.18.2"},
 				Vrf:         3982,
 				Asn:         4200003073,
-				// FIXME clarify if this is required
-				// NatType:     apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
 			},
 			{
 				Network:             "internet",
@@ -151,8 +147,6 @@ var (
 				Ips:         []string{"10.0.18.2"},
 				Vrf:         3982,
 				Asn:         4200003073,
-				// FIXME clarify if this is required
-				// NatType:     apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
 			},
 			{
 				Network:             "internet",
@@ -205,8 +199,6 @@ var (
 				Ips:         []string{"10.0.18.2"},
 				Vrf:         3982,
 				Asn:         4200003073,
-				// FIXME clarify if this is required
-				// NatType:     apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
 			},
 			{
 				Network:             "internet",
@@ -293,8 +285,6 @@ var (
 				Ips:         []string{"10.0.18.2"},
 				Vrf:         3982,
 				Asn:         4200003073,
-				// FIXME clarify if this is required
-				// NatType:     apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
 			},
 			{
 				Network:             "internet",

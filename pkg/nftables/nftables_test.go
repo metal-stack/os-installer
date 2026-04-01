@@ -35,8 +35,6 @@ var (
 				Prefixes:    []string{"10.0.18.0/22"},
 				Ips:         []string{"10.0.18.2"},
 				Vrf:         3982,
-				// FIXME clarify if this is required
-				// NatType:     apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE,
 			},
 			{
 				Network:             "internet",
