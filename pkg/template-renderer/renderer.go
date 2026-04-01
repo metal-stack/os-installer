@@ -24,13 +24,16 @@ type (
 		Data           any
 		// Validate allows the validation of the rendered template on a given temp file path, optional
 		Validate func(path string) error
-		Fs       afero.Fs
+		// An optional prefix when creating tmp files
+		TmpFilePrefix string
+		Fs            afero.Fs
 	}
 
 	Renderer struct {
 		fs         afero.Afero
 		log        *slog.Logger
 		tpl        *template.Template
+		prefix     string
 		data       any
 		validateFn func(path string) error
 	}
@@ -60,6 +63,7 @@ func New(c *Config) (*Renderer, error) {
 		fs: afero.Afero{
 			Fs: fs,
 		},
+		prefix: c.TmpFilePrefix,
 	}, nil
 }
 
@@ -68,7 +72,7 @@ func New(c *Config) (*Renderer, error) {
 func (r *Renderer) Render(ctx context.Context, destFile string) (changed bool, err error) {
 	r.log.Info("rendering template file", "destination", destFile, "data", r.data)
 
-	stagingFile := fmt.Sprintf("%s-%s", destFile, uuid.New().String())
+	stagingFile := fmt.Sprintf("%s%s-%s", r.prefix, destFile, uuid.New().String())
 
 	f, err := r.fs.Create(stagingFile)
 	if err != nil {
