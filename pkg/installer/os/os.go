@@ -7,6 +7,7 @@ import (
 
 	"github.com/metal-stack/os-installer/pkg/exec"
 	"github.com/metal-stack/os-installer/pkg/installer/os/almalinux"
+	"github.com/metal-stack/os-installer/pkg/installer/os/centos"
 	oscommon "github.com/metal-stack/os-installer/pkg/installer/os/common"
 	"github.com/metal-stack/os-installer/pkg/installer/os/debian"
 	"github.com/metal-stack/os-installer/pkg/installer/os/ubuntu"
@@ -19,6 +20,7 @@ const (
 	ubuntuOS    = osName("ubuntu")
 	debianOS    = osName("debian")
 	almalinuxOS = osName("almalinux")
+	centOS      = osName("centos")
 	// defaultOS contains no specific overwrites and can be used by out-of-tree images
 	defaultOS = osName("default")
 )
@@ -100,6 +102,9 @@ func fromOsName(name string, cfg *oscommon.Config) (oscommon.OperatingSystem, er
 	case almalinuxOS:
 		cfg.Log.Info("using almalinux os-installer")
 		return almalinux.New(cfg), nil
+	case centOS:
+		cfg.Log.Info("using centos os-installer")
+		return centos.New(cfg), nil
 	default:
 		if cfg.Name != nil {
 			return nil, fmt.Errorf("os with name %q is not supported", os)

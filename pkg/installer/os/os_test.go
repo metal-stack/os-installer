@@ -11,6 +11,7 @@ import (
 	"github.com/metal-stack/os-installer/pkg/exec"
 	operatingsystem "github.com/metal-stack/os-installer/pkg/installer/os"
 	"github.com/metal-stack/os-installer/pkg/installer/os/almalinux"
+	"github.com/metal-stack/os-installer/pkg/installer/os/centos"
 	oscommon "github.com/metal-stack/os-installer/pkg/installer/os/common"
 	"github.com/metal-stack/os-installer/pkg/installer/os/debian"
 	"github.com/metal-stack/os-installer/pkg/installer/os/ubuntu"
@@ -68,6 +69,22 @@ REDHAT_SUPPORT_PRODUCT="AlmaLinux"
 REDHAT_SUPPORT_PRODUCT_VERSION="10.1"
 SUPPORT_END=2035-06-01
 `
+	centosRelease = `NAME="CentOS Linux"
+VERSION="7 (Core)"
+ID="centos"
+ID_LIKE="rhel fedora"
+VERSION_ID="7"
+PRETTY_NAME="CentOS Linux 7 (Core)"
+ANSI_COLOR="0;31"
+CPE_NAME="cpe:/o:centos:centos:7"
+HOME_URL="https://www.centos.org/"
+BUG_REPORT_URL="https://bugs.centos.org/"
+
+CENTOS_MANTISBT_PROJECT="CentOS-7"
+CENTOS_MANTISBT_PROJECT_VERSION="7"
+REDHAT_SUPPORT_PRODUCT="centos"
+REDHAT_SUPPORT_PRODUCT_VERSION="7"
+`
 	unknownRelease = `NAME="EndeavourOS"
 PRETTY_NAME="EndeavourOS"
 ID="endeavouros"
@@ -110,6 +127,13 @@ func Test_New(t *testing.T) {
 				require.NoError(t, afero.WriteFile(fs, operatingsystem.OsReleasePath, []byte(almalinuxRelease), 0777))
 			},
 			want: &almalinux.Os{},
+		},
+		{
+			name: "detect centos",
+			fsMocks: func(fs *afero.Afero) {
+				require.NoError(t, afero.WriteFile(fs, operatingsystem.OsReleasePath, []byte(centosRelease), 0777))
+			},
+			want: &centos.Os{},
 		},
 		{
 			name: "detect default for unknown",
