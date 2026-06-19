@@ -72,10 +72,10 @@ table inet nat {
     }
     chain prerouting_ct {
         type filter hook prerouting priority raw; policy accept;
-        iifname "vlan3981" tcp dport domain ct zone set 3
-        iifname "vlan3981" udp dport domain ct zone set 3
-        iifname "vlan3983" tcp dport domain ct zone set 3
-        iifname "vlan3983" udp dport domain ct zone set 3
+        ip daddr @proxy_dns_servers iifname "vlan3981" tcp dport domain ct zone set 3
+        ip daddr @proxy_dns_servers iifname "vlan3981" udp dport domain ct zone set 3
+        ip daddr @proxy_dns_servers iifname "vlan3983" tcp dport domain ct zone set 3
+        ip daddr @proxy_dns_servers iifname "vlan3983" udp dport domain ct zone set 3
     }
     chain input {
         type nat hook input priority 0; policy accept;

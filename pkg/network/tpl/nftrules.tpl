@@ -104,8 +104,8 @@ table inet nat {
         {{-  $port:=.DNSProxyDNAT.Port }}
         {{-  $zone:=.DNSProxyDNAT.Zone }}
         {{- range .DNSProxyDNAT.InInterfaces }}
-        iifname "{{ . }}" tcp dport {{ $port }} ct zone set {{ $zone }}
-        iifname "{{ . }}" udp dport {{ $port }} ct zone set {{ $zone }}
+        {{ if $daddr -}} {{ $dst.AddressFamily }} daddr {{ $daddr }} {{ end -}} iifname "{{ . }}" tcp dport {{ $port }} ct zone set {{ $zone }}
+        {{ if $daddr -}} {{ $dst.AddressFamily }} daddr {{ $daddr }} {{ end -}} iifname "{{ . }}" udp dport {{ $port }} ct zone set {{ $zone }}
         {{- end }}
     }
     chain input {
