@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	chronyConfigPath = "/etc/chrony/chrony.conf"
+	chronyConfigPath   = "/etc/chrony/chrony.conf"
+	defaultTimeservers = "time.cloudflare.com"
 )
 
 var (
@@ -35,6 +36,9 @@ type TemplateData struct {
 }
 
 func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData, vrfName string) (changed bool, err error) {
+	if len(c.NTPServers) == 0 {
+		c.NTPServers = append(c.NTPServers, defaultTimeservers)
+	}
 	serviceName := fmt.Sprintf("chrony@%s.service", vrfName)
 
 	r, err := renderer.New(&renderer.Config{

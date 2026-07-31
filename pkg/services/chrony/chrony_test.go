@@ -38,6 +38,15 @@ func TestWriteSystemdUnit(t *testing.T) {
 			wantErr:     nil,
 		},
 		{
+			name: "render empty ntpservers",
+			c: &TemplateData{
+				NTPServers: nil,
+			},
+			wantConfig:  expectedDefaultConfig,
+			wantChanged: true,
+			wantErr:     nil,
+		},
+		{
 			name: "render custom",
 			c: &TemplateData{
 				NTPServers: []string{"1.2.3.4", "1.2.3.5"},
