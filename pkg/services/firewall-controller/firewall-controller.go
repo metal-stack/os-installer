@@ -1,0 +1,49 @@
+package firewallcontroller
+
+import (
+	"context"
+	"log/slog"
+
+	systemd_renderer "github.com/metal-stack/os-installer/pkg/systemd-service-renderer"
+	"github.com/spf13/afero"
+
+	_ "embed"
+)
+
+const (
+	serviceName     = "firewall-controller.service"
+	serviceUnitPath = "/etc/systemd/system/" + serviceName
+)
+
+var (
+	//go:embed firewall_controller.service.tpl
+	templateString string
+)
+
+type Config struct {
+	Log    *slog.Logger
+	Enable bool
+	Reload bool
+	fs     afero.Fs
+}
+
+type TemplateData struct {
+	Comment         string
+	DefaultRouteVrf string
+}
+
+func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (changed bool, err error) {
+	r, err := systemd_renderer.New(&systemd_renderer.Config{
+		Log:            cfg.Log,
+		Enable:         cfg.Enable,
+		ServiceName:    serviceName,
+		TemplateString: templateString,
+		Data:           c,
+		Fs:             cfg.fs,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return r.Render(ctx, serviceUnitPath, cfg.Reload)
+}
