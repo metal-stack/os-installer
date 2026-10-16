@@ -147,7 +147,7 @@ func configureLanInterfaces(ctx context.Context, cfg *Config) error {
 			TemplateString: lanLink.mustReadTemplate(),
 			Data: lanLinkData{
 				Comment: comment,
-				Mac:     nic.Mac,
+				Mac:     nic.Mac, // nolint:staticcheck
 				Index:   idx,
 				MTU:     cfg.Network.MTU(),
 			},

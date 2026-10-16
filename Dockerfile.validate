@@ -1,5 +1,5 @@
 ARG OS_NAME=debian
-ARG OS_VERSION=12
+ARG OS_VERSION=13
 
 FROM ${OS_NAME}:${OS_VERSION}
 ARG OS_NAME
@@ -19,7 +19,6 @@ RUN apt-get update --quiet \
     ca-certificates \
     curl \
     gnupg2 \
-    software-properties-common \
  # install frr from frrouting debian package repo
  && curl -s https://deb.frrouting.org/frr/keys.gpg | tee /usr/share/keyrings/frrouting.gpg > /dev/null \
  && echo "deb [signed-by=/usr/share/keyrings/frrouting.gpg] https://deb.frrouting.org/frr ${FRR_APT_CHANNEL} ${FRR_VERSION}" > /etc/apt/sources.list.d/frr.list \
