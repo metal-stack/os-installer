@@ -1,7 +1,8 @@
 [Unit]
 Description=Tailscale node agent
 Documentation=https://tailscale.com/kb/
-After=network.target
+After=network-online.target frr.service
+Wants=network-online.target frr.service
 
 [Service]
 LimitMEMLOCK=infinity
