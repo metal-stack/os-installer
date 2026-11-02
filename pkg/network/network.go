@@ -56,7 +56,7 @@ func (n *Network) IsMachine() bool {
 }
 
 func (n *Network) HasVpn() bool {
-	if n.allocation.Vpn != nil && n.allocation.Vpn.AuthKey != "" {
+	if n.allocation.Vpn != nil && n.allocation.Vpn.ControlPlaneAddress != "" {
 		return true
 	}
 	return false

@@ -107,11 +107,11 @@ func TestNetwork_HasVpn(t *testing.T) {
 	}{
 		{
 			name:       "firewall with vpn",
-			allocation: &apiv2.MachineAllocation{Vpn: &apiv2.MachineVPN{AuthKey: "secret"}},
+			allocation: &apiv2.MachineAllocation{Vpn: &apiv2.MachineVPN{ControlPlaneAddress: "https://127.0.0.1"}},
 			want:       true,
 		},
 		{
-			name:       "firewall with vpn but not authkey",
+			name:       "firewall with vpn but not control plane address",
 			allocation: &apiv2.MachineAllocation{Vpn: &apiv2.MachineVPN{}},
 			want:       false,
 		},
