@@ -3,6 +3,7 @@ table inet metal {
     chain input {
         type filter hook input priority 0; policy drop;
         meta l4proto ipv6-icmp counter accept comment "icmpv6 input required for neighbor discovery"
+        meta l4proto tcp ip hdrlength gt 5 counter drop comment "fix for cve_2026_98432"
         iifname "lo" counter accept comment "BGP unnumbered"
         iifname "lan0" ip6 saddr fe80::/64 tcp dport bgp counter accept comment "bgp unnumbered input from lan0"
         iifname "lan1" ip6 saddr fe80::/64 tcp dport bgp counter accept comment "bgp unnumbered input from lan1"
@@ -22,6 +23,7 @@ table inet metal {
     }
     chain forward {
         type filter hook forward priority 0; policy drop;
+        meta l4proto tcp ip hdrlength gt 5 counter drop comment "fix for cve_2026_98432"
         ct state invalid counter drop comment "drop invalid packets from forwarding to prevent malicious activity"
         ct state established,related counter accept comment "stateful forward"
         tcp dport bgp ct state new counter jump refuse comment "block bgp forward to machines"
