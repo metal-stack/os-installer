@@ -45,6 +45,12 @@ vars:
 af-packet:
   - interface: {{ .Interface }}
 
+# Command socket used by suricatasc (reload rules, stats, ...).
+# "auto" enables the socket in live capture mode; offline runs stay clean.
+unix-command:
+  enabled: auto
+  filename: /run/suricata-command.socket
+
 # Rules are downloaded and merged by suricata-update.
 default-rule-path: /var/lib/suricata/rules
 rule-files:
@@ -56,4 +62,41 @@ outputs:
       enabled: yes
       filename: eve.json
       types:
+        # Operational events.
         - alert
+        - anomaly
+        - stats
+        # Flow records, one event per flow (high volume).
+        - flow
+        # Application layer.
+        - http
+        - http2
+        - dns
+        - doh2
+        - mdns
+        - tls
+        - quic
+        - files
+        # Mail and file transfer.
+        - smtp
+        - ftp
+        - nfs
+        - smb
+        - tftp
+        - websocket
+        # Authentication and directory services.
+        - krb5
+        - ldap
+        - ssh
+        - dcerpc
+        # Network services.
+        - dhcp
+        - snmp
+        - sip
+        - rdp
+        - rfb
+        - ike
+        - mqtt
+        - pgsql
+        - pop3
+        - bittorrent-dht
