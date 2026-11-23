@@ -56,11 +56,15 @@ default-rule-path: /var/lib/suricata/rules
 rule-files:
   - suricata.rules
 
-# Without an outputs section Suricata does not log at all.
+# Events are streamed to the EveBox agent over a unix socket, so nothing is
+# persisted on the firewall. The agent creates the socket; start it before
+# Suricata, and note that threaded output is not supported for unix sockets.
 outputs:
   - eve-log:
       enabled: yes
-      filename: eve.json
+      filetype: unix_stream
+      filename: /run/evebox/eve.sock
+      threaded: false
       types:
         # Operational events.
         - alert
