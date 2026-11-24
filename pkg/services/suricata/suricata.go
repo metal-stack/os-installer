@@ -12,7 +12,10 @@ import (
 )
 
 const (
-	suricataServiceName = "suricata.service"
+	suricataServiceName     = "suricata.service"
+	suricataServiceUnitPath = "/etc/systemd/system/" + suricataServiceName
+	suricataIpsServiceName  = "suricata-ips.service"
+	suricataIpsServicePath  = "/etc/systemd/system/" + suricataIpsServiceName
 
 	suricataUpdateServiceName     = "suricata_update.service"
 	suricataUpdateServiceUnitPath = "/etc/systemd/system/" + suricataUpdateServiceName
@@ -26,6 +29,10 @@ var (
 	suricataConfigTemplateString string
 	//go:embed suricata_defaults.tpl
 	suricataDefaultsTemplateString string
+	//go:embed suricata.service.tpl
+	suricataServiceTemplateString string
+	//go:embed suricata-ips.service.tpl
+	suricataIpsServiceTemplateString string
 	//go:embed suricata_update.service.tpl
 	suricataUpdateServiceTemplateString string
 )
@@ -43,24 +50,52 @@ type TemplateData struct {
 }
 
 func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (changed bool, err error) {
-	r, err := systemd_renderer.New(&systemd_renderer.Config{
-		ServiceName:    suricataUpdateServiceName,
-		Log:            cfg.Log,
-		TemplateString: suricataUpdateServiceTemplateString,
-		Data:           c,
-		Fs:             cfg.fs,
-	})
-	if err != nil {
-		return false, err
+	units := []struct {
+		serviceName    string
+		path           string
+		templateString string
+		enable         bool
+	}{
+		{
+			serviceName:    suricataUpdateServiceName,
+			path:           suricataUpdateServiceUnitPath,
+			templateString: suricataUpdateServiceTemplateString,
+			enable:         cfg.Enable,
+		},
+		{
+			serviceName:    suricataServiceName,
+			path:           suricataServiceUnitPath,
+			templateString: suricataServiceTemplateString,
+			enable:         cfg.Enable,
+		},
+		{
+			serviceName:    suricataIpsServiceName,
+			path:           suricataIpsServicePath,
+			templateString: suricataIpsServiceTemplateString,
+			enable:         false,
+		},
 	}
 
-	chg, err := r.Render(ctx, suricataUpdateServiceUnitPath, cfg.Reload)
-	if err != nil {
-		return chg, err
-	}
+	for _, unit := range units {
+		r, err := systemd_renderer.New(&systemd_renderer.Config{
+			ServiceName:    unit.serviceName,
+			Log:            cfg.Log,
+			TemplateString: unit.templateString,
+			Data:           c,
+			Fs:             cfg.fs,
+			Enable:         unit.enable,
+		})
+		if err != nil {
+			return false, err
+		}
 
-	// return changed if one has changed
-	changed = changed || chg
+		chg, err := r.Render(ctx, unit.path, false)
+		if err != nil {
+			return chg, err
+		}
+
+		changed = changed || chg
+	}
 
 	for _, spec := range []struct {
 		path           string

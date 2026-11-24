@@ -15,7 +15,11 @@ import (
 
 var (
 	//go:embed test/suricata-update.service
+	expectedSuricataUpdateSystemdUnit string
+	//go:embed test/suricata.service
 	expectedSuricataSystemdUnit string
+	//go:embed test/suricata-ips.service
+	expectedSuricataIpsSystemdUnit string
 	//go:embed test/suricata.yaml
 	expectedSuricataConfig string
 	//go:embed test/suricata_defaults
@@ -24,13 +28,15 @@ var (
 
 func TestWriteSystemdUnit(t *testing.T) {
 	tests := []struct {
-		name                 string
-		c                    *TemplateData
-		wantSuricataService  string
-		wantSuricataConfig   string
-		wantSuricataDefaults string
-		wantChanged          bool
-		wantErr              error
+		name                      string
+		c                         *TemplateData
+		wantSuricataUpdateService string
+		wantSuricataService       string
+		wantSuricataIpsService    string
+		wantSuricataConfig        string
+		wantSuricataDefaults      string
+		wantChanged               bool
+		wantErr                   error
 	}{
 		{
 			name: "render",
@@ -38,11 +44,13 @@ func TestWriteSystemdUnit(t *testing.T) {
 				DefaultRouteVrf: "vrf104009",
 				Interface:       "vlan104009",
 			},
-			wantSuricataService:  expectedSuricataSystemdUnit,
-			wantSuricataConfig:   expectedSuricataConfig,
-			wantSuricataDefaults: expectedSuricataDefaults,
-			wantChanged:          true,
-			wantErr:              nil,
+			wantSuricataUpdateService: expectedSuricataUpdateSystemdUnit,
+			wantSuricataService:       expectedSuricataSystemdUnit,
+			wantSuricataIpsService:    expectedSuricataIpsSystemdUnit,
+			wantSuricataConfig:        expectedSuricataConfig,
+			wantSuricataDefaults:      expectedSuricataDefaults,
+			wantChanged:               true,
+			wantErr:                   nil,
 		},
 	}
 	for _, tt := range tests {
@@ -68,7 +76,21 @@ func TestWriteSystemdUnit(t *testing.T) {
 			content, err := fs.ReadFile(suricataUpdateServiceUnitPath)
 			require.NoError(t, err)
 
+			if diff := cmp.Diff(tt.wantSuricataUpdateService, string(content)); diff != "" {
+				t.Errorf("diff (+got -want):\n%s", diff)
+			}
+
+			content, err = fs.ReadFile(suricataServiceUnitPath)
+			require.NoError(t, err)
+
 			if diff := cmp.Diff(tt.wantSuricataService, string(content)); diff != "" {
+				t.Errorf("diff (+got -want):\n%s", diff)
+			}
+
+			content, err = fs.ReadFile(suricataIpsServicePath)
+			require.NoError(t, err)
+
+			if diff := cmp.Diff(tt.wantSuricataIpsService, string(content)); diff != "" {
 				t.Errorf("diff (+got -want):\n%s", diff)
 			}
 

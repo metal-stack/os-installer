@@ -57,8 +57,10 @@ rule-files:
   - suricata.rules
 
 # Events are streamed to the EveBox agent over a unix socket, so nothing is
-# persisted on the firewall. The agent creates the socket; start it before
-# Suricata, and note that threaded output is not supported for unix sockets.
+# persisted on the firewall. The agent creates the socket and may be started
+# later: Suricata keeps retrying the connection meanwhile and drops events
+# produced before it is established. Threaded output is not supported for
+# unix sockets.
 outputs:
   - eve-log:
       enabled: yes
@@ -101,6 +103,4 @@ outputs:
         - rfb
         - ike
         - mqtt
-        - pgsql
         - pop3
-        - bittorrent-dht

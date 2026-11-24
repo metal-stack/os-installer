@@ -1,5 +1,8 @@
 [Unit]
 Description=Suricata Intrusion Detection Service Rules Update
+After=network-online.target
+Wants=network-online.target
+Before=suricata.service suricata-ips.service
 
 [Service]
 LimitMEMLOCK=infinity
