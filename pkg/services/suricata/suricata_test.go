@@ -14,6 +14,8 @@ import (
 )
 
 var (
+	//go:embed test/evebox.service
+	expectedEveboxSystemdUnit string
 	//go:embed test/suricata-update.service
 	expectedSuricataUpdateSystemdUnit string
 	//go:embed test/suricata.service
@@ -35,6 +37,7 @@ func TestWriteSystemdUnit(t *testing.T) {
 		wantSuricataIpsService    string
 		wantSuricataConfig        string
 		wantSuricataDefaults      string
+		wantEveboxService         string
 		wantChanged               bool
 		wantErr                   error
 	}{
@@ -43,7 +46,9 @@ func TestWriteSystemdUnit(t *testing.T) {
 			c: &TemplateData{
 				DefaultRouteVrf: "vrf104009",
 				Interface:       "vlan104009",
+				TenantVrf:       "vrf70",
 			},
+			wantEveboxService:         expectedEveboxSystemdUnit,
 			wantSuricataUpdateService: expectedSuricataUpdateSystemdUnit,
 			wantSuricataService:       expectedSuricataSystemdUnit,
 			wantSuricataIpsService:    expectedSuricataIpsSystemdUnit,
@@ -73,7 +78,14 @@ func TestWriteSystemdUnit(t *testing.T) {
 				return
 			}
 
-			content, err := fs.ReadFile(suricataUpdateServiceUnitPath)
+			content, err := fs.ReadFile(eveboxServiceUnitPath)
+			require.NoError(t, err)
+
+			if diff := cmp.Diff(tt.wantEveboxService, string(content)); diff != "" {
+				t.Errorf("diff (+got -want):\n%s", diff)
+			}
+
+			content, err = fs.ReadFile(suricataUpdateServiceUnitPath)
 			require.NoError(t, err)
 
 			if diff := cmp.Diff(tt.wantSuricataUpdateService, string(content)); diff != "" {

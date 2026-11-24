@@ -12,6 +12,9 @@ import (
 )
 
 const (
+	eveboxServiceName     = "evebox.service"
+	eveboxServiceUnitPath = "/etc/systemd/system/" + eveboxServiceName
+
 	suricataServiceName     = "suricata.service"
 	suricataServiceUnitPath = "/etc/systemd/system/" + suricataServiceName
 	suricataIpsServiceName  = "suricata-ips.service"
@@ -25,6 +28,8 @@ const (
 )
 
 var (
+	//go:embed evebox.service.tpl
+	eveboxServiceTemplateString string
 	//go:embed suricata.yaml.tpl
 	suricataConfigTemplateString string
 	//go:embed suricata_defaults.tpl
@@ -47,6 +52,7 @@ type Config struct {
 type TemplateData struct {
 	Interface       string
 	DefaultRouteVrf string
+	TenantVrf       string
 }
 
 func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (changed bool, err error) {
@@ -56,6 +62,12 @@ func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (change
 		templateString string
 		enable         bool
 	}{
+		{
+			serviceName:    eveboxServiceName,
+			path:           eveboxServiceUnitPath,
+			templateString: eveboxServiceTemplateString,
+			enable:         false,
+		},
 		{
 			serviceName:    suricataUpdateServiceName,
 			path:           suricataUpdateServiceUnitPath,

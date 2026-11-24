@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"strings"
 
 	"github.com/metal-stack/os-installer/pkg/network"
 	"github.com/metal-stack/os-installer/pkg/services/chrony"
@@ -32,6 +31,10 @@ func WriteSystemdServices(ctx context.Context, log *slog.Logger, network *networ
 		errs = append(errs, err)
 	}
 	tenantVRF, err = network.GetTenantNetworkVrfName()
+	if err != nil {
+		errs = append(errs, err)
+	}
+	defaultRouteVLAN, err := network.GetDefaultRouteNetworkVlan()
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -97,14 +100,14 @@ func WriteSystemdServices(ctx context.Context, log *slog.Logger, network *networ
 	// suricata
 	//
 	// TODO: this listens only on one internet facing interface, but should listening on all external interfaces.
-	suricataInterface := strings.ReplaceAll(defaultRouteVRF, "vrf", "vlan")
 	if _, err := suricata.WriteSystemdUnit(ctx, &suricata.Config{
 		Log:    log,
 		Enable: true,
 		Reload: false,
 	}, &suricata.TemplateData{
-		Interface:       suricataInterface,
+		Interface:       defaultRouteVLAN,
 		DefaultRouteVrf: defaultRouteVRF,
+		TenantVrf:       tenantVRF,
 	}); err != nil {
 		errs = append(errs, err)
 	}
