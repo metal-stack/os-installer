@@ -4,6 +4,8 @@ Description=EveBox Agent
 [Service]
 Environment=EVEBOX_DATA_DIRECTORY=/var/lib/evebox
 EnvironmentFile=-/etc/default/evebox-agent
+RuntimeDirectory=evebox
+Restart=on-failure
 ExecStart=/bin/ip vrf exec vrf70 /usr/bin/evebox agent -c /etc/evebox/agent.yaml
 
 [Install]
