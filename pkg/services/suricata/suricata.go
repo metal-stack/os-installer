@@ -17,7 +17,7 @@ const (
 	suricataIpsServiceName  = "suricata-ips.service"
 	suricataIpsServicePath  = "/etc/systemd/system/" + suricataIpsServiceName
 
-	suricataUpdateServiceName     = "suricata_update.service"
+	suricataUpdateServiceName     = "suricata-update.service"
 	suricataUpdateServiceUnitPath = "/etc/systemd/system/" + suricataUpdateServiceName
 
 	suricataDefaultsPath = "/etc/default/suricata"
@@ -33,7 +33,7 @@ var (
 	suricataServiceTemplateString string
 	//go:embed suricata-ips.service.tpl
 	suricataIpsServiceTemplateString string
-	//go:embed suricata_update.service.tpl
+	//go:embed suricata-update.service.tpl
 	suricataUpdateServiceTemplateString string
 )
 

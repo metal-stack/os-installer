@@ -1,8 +1,8 @@
 [Unit]
 Description=Suricata Intrusion Prevention Service (nfqueue)
 Documentation=man:suricata(8) man:suricatasc(8)
-After=network.target network-online.target suricata_update.service
-Wants=network-online.target suricata_update.service
+After=network.target network-online.target suricata-update.service
+Wants=network-online.target suricata-update.service
 Conflicts=suricata.service
 
 [Service]

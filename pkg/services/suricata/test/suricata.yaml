@@ -51,10 +51,13 @@ unix-command:
   enabled: auto
   filename: /run/suricata-command.socket
 
-# Rules are downloaded and merged by suricata-update.
+# Rules are downloaded and merged by suricata-update. It also writes the
+# classification file to the rule directory, so point Suricata there instead
+# of the default /etc/suricata location.
 default-rule-path: /var/lib/suricata/rules
 rule-files:
   - suricata.rules
+classification-file: /var/lib/suricata/rules/classification.config
 
 # Events are streamed to the EveBox agent over a unix socket, so nothing is
 # persisted on the firewall. The agent creates the socket and may be started

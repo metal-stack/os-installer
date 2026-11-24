@@ -1,8 +1,8 @@
 [Unit]
 Description=Suricata Intrusion Detection Service (af-packet)
 Documentation=man:suricata(8) man:suricatasc(8)
-After=network.target network-online.target suricata_update.service
-Wants=network-online.target suricata_update.service
+After=network.target network-online.target suricata-update.service
+Wants=network-online.target suricata-update.service
 Conflicts=suricata-ips.service
 
 [Service]
