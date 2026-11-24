@@ -295,6 +295,14 @@ func (n *Network) GetDefaultRouteNetworkVrfName() (string, error) {
 	return fmt.Sprintf("vrf%d", nw.Vrf), nil
 }
 
+func (n *Network) GetDefaultRouteNetworkVlan() (string, error) {
+	nw, err := n.GetDefaultRouteNetwork()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("vlan%d", nw.Vrf), nil
+}
+
 func (n *Network) GetTenantNetworkVrfName() (string, error) {
 	nw, err := n.PrivatePrimaryNetwork()
 	if err != nil {
