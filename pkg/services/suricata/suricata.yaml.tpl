@@ -13,6 +13,7 @@ suricata-version: "8.0"
 vars:
   address-groups:
     HOME_NET: "[192.168.0.0/16,10.0.0.0/8,172.16.0.0/12]"
+    HOME_NET: "[192.168.0.0/16,10.0.0.0/8,172.16.0.0/12{{ range .HomeNetPrefixes }},{{ . }}{{ end }}]"
     EXTERNAL_NET: "!$HOME_NET"
     HTTP_SERVERS: "$HOME_NET"
     SMTP_SERVERS: "$HOME_NET"

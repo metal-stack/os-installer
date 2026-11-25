@@ -47,6 +47,7 @@ func TestWriteSystemdUnit(t *testing.T) {
 				DefaultRouteVrf: "vrf104009",
 				Interface:       "vlan104009",
 				TenantVrf:       "vrf70",
+				HomeNetPrefixes: []string{"185.1.2.0/24", "185.27.0.0/22", "100.127.129.0/24"},
 			},
 			wantEveboxService:         expectedEveboxSystemdUnit,
 			wantSuricataUpdateService: expectedSuricataUpdateSystemdUnit,
@@ -119,6 +120,57 @@ func TestWriteSystemdUnit(t *testing.T) {
 			if diff := cmp.Diff(tt.wantSuricataDefaults, string(content)); diff != "" {
 				t.Errorf("diff (+got -want):\n%s", diff)
 			}
+		})
+	}
+}
+
+func TestHomeNetPrefixes(t *testing.T) {
+	tests := []struct {
+		name     string
+		prefixes []string
+		want     []string
+		wantErr  string
+	}{
+		{
+			name:     "no prefixes",
+			prefixes: nil,
+			want:     nil,
+		},
+		{
+			name: "private prefixes are dropped, public ones kept and deduplicated",
+			prefixes: []string{
+				"10.0.16.0/22",
+				"10.0.12.0/22",
+				"172.16.5.0/24",
+				"192.168.1.0/24",
+				"185.1.2.0/24",
+				"185.27.0.0/22",
+				"185.1.2.0/24",
+				"100.127.129.0/24",
+				"2001:db8::/48",
+			},
+			want: []string{"185.1.2.0/24", "185.27.0.0/22", "100.127.129.0/24", "2001:db8::/48"},
+		},
+		{
+			name:     "prefix larger than a private range is kept",
+			prefixes: []string{"10.0.0.0/7"},
+			want:     []string{"10.0.0.0/7"},
+		},
+		{
+			name:     "invalid prefix",
+			prefixes: []string{"foo"},
+			wantErr:  `unable to parse prefix "foo": netip.ParsePrefix("foo"): no '/'`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := HomeNetPrefixes(tt.prefixes)
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

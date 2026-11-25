@@ -264,6 +264,15 @@ func (n *Network) GetNetworks(networkType apiv2.NetworkType) []*apiv2.MachineNet
 	return networks
 }
 
+func (n *Network) Prefixes() []string {
+	var prefixes []string
+	for _, nw := range n.allocation.Networks {
+		prefixes = append(prefixes, nw.Prefixes...)
+	}
+
+	return lo.Uniq(prefixes)
+}
+
 func (n *Network) GetExternalNetworkVrfNames() (vrfNames []string) {
 	for _, nw := range n.allocation.Networks {
 		if nw.NetworkType != apiv2.NetworkType_NETWORK_TYPE_EXTERNAL {

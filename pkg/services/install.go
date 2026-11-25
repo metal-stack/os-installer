@@ -100,6 +100,10 @@ func WriteSystemdServices(ctx context.Context, log *slog.Logger, network *networ
 	// suricata
 	//
 	// TODO: this listens only on one internet facing interface, but should listening on all external interfaces.
+	homeNetPrefixes, err := suricata.HomeNetPrefixes(network.Prefixes())
+	if err != nil {
+		errs = append(errs, err)
+	}
 	if _, err := suricata.WriteSystemdUnit(ctx, &suricata.Config{
 		Log:    log,
 		Enable: true,
@@ -108,6 +112,7 @@ func WriteSystemdServices(ctx context.Context, log *slog.Logger, network *networ
 		Interface:       defaultRouteVLAN,
 		DefaultRouteVrf: defaultRouteVRF,
 		TenantVrf:       tenantVRF,
+		HomeNetPrefixes: homeNetPrefixes,
 	}); err != nil {
 		errs = append(errs, err)
 	}

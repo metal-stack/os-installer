@@ -2,7 +2,10 @@ package suricata
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"net/netip"
+	"slices"
 
 	systemd_renderer "github.com/metal-stack/os-installer/pkg/systemd-service-renderer"
 	renderer "github.com/metal-stack/os-installer/pkg/template-renderer"
@@ -53,6 +56,39 @@ type TemplateData struct {
 	Interface       string
 	DefaultRouteVrf string
 	TenantVrf       string
+	// HomeNetPrefixes are added to the private ranges in HOME_NET.
+	HomeNetPrefixes []string
+}
+
+func HomeNetPrefixes(prefixes []string) ([]string, error) {
+	var (
+		result []string
+
+		// privateHomeNets are the private ranges which are always part of HOME_NET.
+		privateHomeNets = []netip.Prefix{
+			netip.MustParsePrefix("192.168.0.0/16"),
+			netip.MustParsePrefix("10.0.0.0/8"),
+			netip.MustParsePrefix("172.16.0.0/12"),
+		}
+	)
+
+	for _, p := range prefixes {
+		prefix, err := netip.ParsePrefix(p)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse prefix %q: %w", p, err)
+		}
+
+		covered := slices.ContainsFunc(privateHomeNets, func(private netip.Prefix) bool {
+			return private.Bits() <= prefix.Bits() && private.Contains(prefix.Addr())
+		})
+		if covered || slices.Contains(result, prefix.String()) {
+			continue
+		}
+
+		result = append(result, prefix.String())
+	}
+
+	return result, nil
 }
 
 func WriteSystemdUnit(ctx context.Context, cfg *Config, c *TemplateData) (changed bool, err error) {
