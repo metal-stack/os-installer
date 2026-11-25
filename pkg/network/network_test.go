@@ -1901,3 +1901,33 @@ func TestNetwork_GetTenantNetworkVrfName(t *testing.T) {
 		})
 	}
 }
+
+func TestNetwork_Prefixes(t *testing.T) {
+	allocation := &apiv2.MachineAllocation{
+		AllocationType: apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL,
+		Networks: []*apiv2.MachineNetwork{
+			{
+				Network:     "private",
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_CHILD,
+				Prefixes:    []string{"10.0.16.0/22"},
+			},
+			{
+				Network:     "internet",
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
+				Prefixes:    []string{"185.1.2.0/24", "185.27.0.0/22"},
+			},
+			{
+				Network:     "internet-duplicate",
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_EXTERNAL,
+				Prefixes:    []string{"185.1.2.0/24"},
+			},
+			{
+				Network:     "underlay",
+				NetworkType: apiv2.NetworkType_NETWORK_TYPE_UNDERLAY,
+			},
+		},
+	}
+
+	got := network.New(allocation).Prefixes()
+	require.Equal(t, []string{"10.0.16.0/22", "185.1.2.0/24", "185.27.0.0/22"}, got)
+}

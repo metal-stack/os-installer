@@ -1,11 +1,24 @@
 [Unit]
 Description=Suricata Intrusion Detection Service Rules Update
+After=network-online.target
+Wants=network-online.target
+Before=suricata.service suricata-ips.service
+# Give up after 10 failed attempts within 10 minutes, the timer tries again later.
+StartLimitIntervalSec=10min
+StartLimitBurst=10
 
 [Service]
 LimitMEMLOCK=infinity
 User=root
 Group=root
 Type=oneshot
+# The network may not be ready right after boot, retry until the rules are downloaded.
+Restart=on-failure
+RestartSec=30s
+# Refresh the source index (/var/lib/suricata/update/cache/index.yaml), it is not
+# updated by plain suricata-update but needed to list the available rulesets.
+# Failures are ignored, the bundled index is used as a fallback.
+ExecStartPre=-/bin/ip vrf exec vrf104009 /usr/bin/suricata-update update-sources
 ExecStart=/bin/ip vrf exec vrf104009 /usr/bin/suricata-update
 
 [Install]
