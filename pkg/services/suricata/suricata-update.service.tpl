@@ -15,6 +15,10 @@ Type=oneshot
 # The network may not be ready right after boot, retry until the rules are downloaded.
 Restart=on-failure
 RestartSec=30s
+# Refresh the source index (/var/lib/suricata/update/cache/index.yaml), it is not
+# updated by plain suricata-update but needed to list the available rulesets.
+# Failures are ignored, the bundled index is used as a fallback.
+ExecStartPre=-/bin/ip vrf exec {{ .DefaultRouteVrf }} /usr/bin/suricata-update update-sources
 ExecStart=/bin/ip vrf exec {{ .DefaultRouteVrf }} /usr/bin/suricata-update
 
 [Install]
