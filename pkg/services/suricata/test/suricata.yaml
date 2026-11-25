@@ -52,6 +52,17 @@ unix-command:
   enabled: auto
   filename: /run/suricata-command.socket
 
+# In nfqueue (IPS) mode Suricata sits in the forwarding path, so availability
+# of the cluster behind the firewall comes first:
+# - Pick up connections which were established before Suricata (re)started
+#   instead of dropping them. Otherwise every restart or switch of the listen
+#   mode cuts all connections through the firewall.
+# - On internal errors (e.g. memcaps) pass the traffic instead of dropping it.
+#   Packets matching drop rules are still dropped.
+stream:
+  midstream: true
+exception-policy: ignore
+
 # Rules are downloaded and merged by suricata-update. It also writes the
 # classification file to the rule directory, so point Suricata there instead
 # of the default /etc/suricata location. The reference file is not managed by
